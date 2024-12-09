@@ -21,7 +21,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SolanaAccountCreationScanner {
-
+    //    https://mainnet.helius-rpc.com/?api-key=d528e83e-fd04-44de-b13b-2a1839229b5b
+//    https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2
     private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final OkHttpClient client = new OkHttpClient();
@@ -29,16 +30,19 @@ public class SolanaAccountCreationScanner {
 
     public static void main(String[] args) {
         try {
-            logger.info("Получение подписей для SystemProgram...");
+            long startTime = System.nanoTime();
+            logger.info("---Получение подписей для SystemProgram...");
             Set<String> signatures = getSignaturesForSystemProgram();
             logger.info("Получено {} подписей.", signatures.size());
 
             logger.info("Обработка транзакций...");
-            Set<String> createdAccounts = processTransactions(signatures);
-            List<String> wallets = processWallets(createdAccounts);
-
+            Set<String> createdWallets = processTransactions(signatures);
+            List<String> wallets = processWallets(createdWallets);
+            AccountRedis.saveSavedWallets(wallets);
             logger.info("Завершено. Найдено {} новых аккаунтов", wallets.size());
             wallets.forEach(account -> logger.info("Аккаунт: {}", account));
+            long endTime = System.nanoTime();
+            System.out.println("Проверка заняла " + (endTime - startTime) / 1_000_000 + " ms");
         } catch (Exception e) {
             logger.error("Произошла ошибка при выполнении программы.", e);
         }
@@ -96,7 +100,10 @@ public class SolanaAccountCreationScanner {
                 if (containsTransfer(instructions)) {
                     String wallet = extractWallet(instructions);
                     if (wallet != null) {
-                        createdAccounts.add(wallet);
+                        if (!AccountRedis.isWalletProcessed(wallet)) {
+                            AccountRedis.saveProcessedAccount(wallet);
+                            createdAccounts.add(wallet);
+                        }
                     }
                 }
             }
@@ -170,16 +177,17 @@ public class SolanaAccountCreationScanner {
                     Number lamportsNumber = (Number) account.get("lamports");
                     if (lamportsNumber != null) {
                         long lamports = lamportsNumber.longValue();
-                        logger.info("Lamports for wallet {}: {}", batch.get(j), lamports);
-                        if (lamports > 0) {
+//                        logger.info("Lamports for wallet {}: {}", batch.get(j), lamports);
+                        if (lamports > 300000000) {
                             positiveWallets.add(batch.get(j));
                         }
                     } else {
                         logger.warn("Lamports missing for wallet {}", batch.get(j));
                     }
-                } else {
-                    logger.warn("Null account object for wallet {}", batch.get(j));
                 }
+//                else {
+//                    logger.warn("Null account object for wallet {}", batch.get(j));
+//                }
             }
         }
 
