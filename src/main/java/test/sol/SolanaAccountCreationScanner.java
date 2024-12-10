@@ -27,6 +27,7 @@ public class SolanaAccountCreationScanner {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final OkHttpClient client = new OkHttpClient();
     private static final Logger logger = LoggerFactory.getLogger(SolanaAccountCreationScanner.class);
+    private static final Integer MIN_LAMPORTS = 400000000;
 
     public static void main(String[] args) {
         try {
@@ -34,10 +35,12 @@ public class SolanaAccountCreationScanner {
             logger.info("---Получение подписей для SystemProgram...");
             Set<String> signatures = getSignaturesForSystemProgram();
             logger.info("Получено {} подписей.", signatures.size());
-
             logger.info("Обработка транзакций...");
             Set<String> createdWallets = processTransactions(signatures);
+            logger.info("Validation");
+            logger.info("Wallets before validation - {}", createdWallets.size());
             List<String> wallets = processWallets(createdWallets);
+            logger.info("Wallets after validation - {}", wallets.size());
             AccountRedis.saveSavedWallets(wallets);
             logger.info("Завершено. Найдено {} новых аккаунтов", wallets.size());
             wallets.forEach(account -> logger.info("Аккаунт: {}", account));
@@ -135,7 +138,6 @@ public class SolanaAccountCreationScanner {
     private static List<String> processWallets(Set<String> wallets) throws IOException {
         List<String> correctWallets = new ArrayList<>();
         List<String> positiveBalance = hasPositiveBalance(wallets);
-        logger.info("Wallet with positive balance {}", positiveBalance.size());
         for (String wallet : positiveBalance) {
             if (hasTransactions(wallet)) {
                 correctWallets.add(wallet);
@@ -147,8 +149,6 @@ public class SolanaAccountCreationScanner {
     private static List<String> hasPositiveBalance(Set<String> wallets) throws IOException {
         List<String> positiveWallets = new ArrayList<>();
         List<String> walletList = new ArrayList<>(wallets);
-
-        logger.info("Balance check for {} wallets", wallets.size());
 
         int batchSize = 5;
         for (int i = 0; i < walletList.size(); i += batchSize) {
@@ -177,20 +177,13 @@ public class SolanaAccountCreationScanner {
                     Number lamportsNumber = (Number) account.get("lamports");
                     if (lamportsNumber != null) {
                         long lamports = lamportsNumber.longValue();
-//                        logger.info("Lamports for wallet {}: {}", batch.get(j), lamports);
-                        if (lamports > 300000000) {
+                        if (lamports > MIN_LAMPORTS) {
                             positiveWallets.add(batch.get(j));
                         }
-                    } else {
-                        logger.warn("Lamports missing for wallet {}", batch.get(j));
                     }
                 }
-//                else {
-//                    logger.warn("Null account object for wallet {}", batch.get(j));
-//                }
             }
         }
-
         return positiveWallets;
     }
 
@@ -279,7 +272,22 @@ public class SolanaAccountCreationScanner {
         String responseBody = response.body().string();
 
         Map<String, Object> jsonResponse = objectMapper.readValue(responseBody, Map.class);
+
+        validateResponse(jsonResponse);
+
         return jsonResponse;
+    }
+
+    private static void validateResponse(Map<String, Object> jsonResponse) {
+        if (jsonResponse.containsKey("error")) {
+            Map<String, Object> error = (Map<String, Object>) jsonResponse.get("error");
+            String errorMessage = (String) error.get("message");
+            throw new RuntimeException("RPC Error: " + errorMessage);
+        }
+
+        if (!jsonResponse.containsKey("result")) {
+            throw new RuntimeException("RPC Response missing 'result' field: " + jsonResponse);
+        }
     }
 
     private static List<Map<String, Object>> extractInstructions(Map<String, Object> transaction) {

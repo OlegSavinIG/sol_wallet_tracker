@@ -21,7 +21,7 @@ public class SolanaScannerScheduler {
         };
 
         // Запуск задачи с начальной задержкой 0 секунд и интервалом 10 минут
-        scheduler.scheduleAtFixedRate(task, 0, 9, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(task, 0, 11 , TimeUnit.MINUTES);
 
         // Примечание: приложение будет работать в бесконечном цикле, пока вы его не завершите.
         System.out.println("Планировщик запущен. Задача будет выполняться каждые 9 минут.");

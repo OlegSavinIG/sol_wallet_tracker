@@ -2,6 +2,7 @@ package test.sol;
 
 import redis.clients.jedis.Jedis;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,15 @@ public class AccountRedis {
         }
         return accounts;
     }
+    public static List<String> loadSavedAccounts() {
+        List<String> accounts = new ArrayList<>();
+        try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
+            accounts = jedis.lrange(SAVED_WALLETS_KEY, 0, -1);
+        } catch (Exception e) {
+            System.err.println("Ошибка подключения к Redis: " + e.getMessage());
+        }
+        return accounts;
+    }
 
     public static Set<String> loadWalletSignatures(String wallet) {
         Set<String> signatures = new HashSet<>();
@@ -36,7 +46,7 @@ public class AccountRedis {
         return signatures;
     }
 
-    public static void saveWalletSignatures(List<String> signatures, String wallet) {
+    public static void saveWalletSignatures(Set<String> signatures, String wallet) {
         try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
             for (String signature : signatures) {
                 jedis.sadd(SIGNATURES_KEY + wallet, signature);
@@ -101,7 +111,7 @@ public class AccountRedis {
     public static void removeSavedWallets(List<String> wallets) {
         try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
             for (String wallet : wallets) {
-                jedis.srem(SAVED_WALLETS_KEY, wallet);
+                jedis.lrem(SAVED_WALLETS_KEY, 0, wallet);
             }
         } catch (Exception e) {
             System.err.println("Ошибка удаления аккаунта из Redis: " + e.getMessage());
