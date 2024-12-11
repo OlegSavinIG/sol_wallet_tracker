@@ -46,7 +46,6 @@ public class SolanaDefiScanner {
         List<String> confirmedWallets = new ArrayList<>();
         for (String wallet : wallets) {
             Thread.sleep(1000);
-            logger.info("Processing wallet {}", wallet);
             String requestBody = "{"
                     + "\"jsonrpc\":\"2.0\","
                     + "\"id\":1,"
