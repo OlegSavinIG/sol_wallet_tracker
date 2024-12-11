@@ -1,5 +1,6 @@
 package test.sol;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -21,24 +22,31 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SolanaAccountCreationScanner {
-
+    //    https://mainnet.helius-rpc.com/?api-key=d528e83e-fd04-44de-b13b-2a1839229b5b
+//    https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2
     private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final OkHttpClient client = new OkHttpClient();
     private static final Logger logger = LoggerFactory.getLogger(SolanaAccountCreationScanner.class);
+    private static final Integer MIN_LAMPORTS = 400000000;
 
     public static void main(String[] args) {
         try {
-            logger.info("Получение подписей для SystemProgram...");
+            long startTime = System.nanoTime();
+            logger.info("---Получение подписей для SystemProgram...");
             Set<String> signatures = getSignaturesForSystemProgram();
             logger.info("Получено {} подписей.", signatures.size());
-
             logger.info("Обработка транзакций...");
-            Set<String> createdAccounts = processTransactions(signatures);
-            List<String> wallets = processWallets(createdAccounts);
-
+            Set<String> createdWallets = processTransactions(signatures);
+            logger.info("Validation");
+            logger.info("Wallets before validation - {}", createdWallets.size());
+            List<String> wallets = processWallets(createdWallets);
+            logger.info("Wallets after validation - {}", wallets.size());
+            ValidatedWalletsRedis.saveValidatedWallets(wallets);
             logger.info("Завершено. Найдено {} новых аккаунтов", wallets.size());
             wallets.forEach(account -> logger.info("Аккаунт: {}", account));
+            long endTime = System.nanoTime();
+            System.out.println("Проверка заняла " + (endTime - startTime) / 1_000_000 + " ms");
         } catch (Exception e) {
             logger.error("Произошла ошибка при выполнении программы.", e);
         }
@@ -55,7 +63,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse = processRequest(requestBody);
+        Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
         List<Map<String, Object>> result = (List<Map<String, Object>>) jsonResponse.get("result");
 
         Set<String> signatures = new HashSet<>();
@@ -76,27 +84,46 @@ public class SolanaAccountCreationScanner {
 
     private static Set<String> processTransactions(Set<String> signatures) throws IOException {
         Set<String> createdAccounts = new HashSet<>();
+        List<String> signatureList = new ArrayList<>(signatures);
+        int batchSize = 5;
 
-        for (String signature : signatures) {
-            String requestBody = "{"
-                    + "\"jsonrpc\":\"2.0\","
-                    + "\"id\":1,"
-                    + "\"method\":\"getTransaction\","
-                    + "\"params\":["
-                    + "\"" + signature + "\","
-                    + "{\"encoding\":\"jsonParsed\",\"maxSupportedTransactionVersion\":0}"
-                    + "]"
-                    + "}";
+        for (int i = 0; i < signatureList.size(); i += batchSize) {
+            List<String> batchSignatures = signatureList.subList(i, Math.min(i + batchSize, signatureList.size()));
+            StringBuilder batchRequestBody = new StringBuilder("[");
+            for (int j = 0; j < batchSignatures.size(); j++) {
+                String signature = batchSignatures.get(j);
+                batchRequestBody.append("{")
+                        .append("\"jsonrpc\":\"2.0\",")
+                        .append("\"id\":").append(j).append(",")
+                        .append("\"method\":\"getTransaction\",")
+                        .append("\"params\":[\"").append(signature).append("\",")
+                        .append("{\"encoding\":\"jsonParsed\",\"maxSupportedTransactionVersion\":0}")
+                        .append("]}");
+                if (j < batchSignatures.size() - 1) {
+                    batchRequestBody.append(",");
+                }
+            }
+            batchRequestBody.append("]");
 
-            Map<String, Object> jsonResponse = processRequest(requestBody);
-            if (jsonResponse.containsKey("result")) {
-                Map<String, Object> transaction = (Map<String, Object>) jsonResponse.get("result");
-                List<Map<String, Object>> instructions = extractInstructions(transaction);
+            Object response = processRequest(batchRequestBody.toString());
+            if (response instanceof List) {
+                List<Map<String, Object>> jsonResponseList = (List<Map<String, Object>>) response;
 
-                if (containsTransfer(instructions)) {
-                    String wallet = extractWallet(instructions);
-                    if (wallet != null) {
-                        createdAccounts.add(wallet);
+                for (Map<String, Object> jsonResponse : jsonResponseList) {
+                    if (jsonResponse.containsKey("result")) {
+                        Map<String, Object> transaction = (Map<String, Object>) jsonResponse.get("result");
+                        if (transaction == null) {
+                            continue;
+                        }
+                        List<Map<String, Object>> instructions = extractInstructions(transaction);
+
+                        if (containsTransfer(instructions)) {
+                            String wallet = extractWallet(instructions);
+                            if (wallet != null && !ProcessedWalletsRedis.isWalletProcessed(wallet)) {
+                                ProcessedWalletsRedis.saveProcessedWallets(wallet);
+                                createdAccounts.add(wallet);
+                            }
+                        }
                     }
                 }
             }
@@ -104,6 +131,7 @@ public class SolanaAccountCreationScanner {
 
         return createdAccounts;
     }
+
 
     private static boolean containsTransfer(List<Map<String, Object>> instructions) {
         for (Map<String, Object> instruction : instructions) {
@@ -128,7 +156,6 @@ public class SolanaAccountCreationScanner {
     private static List<String> processWallets(Set<String> wallets) throws IOException {
         List<String> correctWallets = new ArrayList<>();
         List<String> positiveBalance = hasPositiveBalance(wallets);
-        logger.info("Wallet with positive balance {}", positiveBalance.size());
         for (String wallet : positiveBalance) {
             if (hasTransactions(wallet)) {
                 correctWallets.add(wallet);
@@ -140,8 +167,6 @@ public class SolanaAccountCreationScanner {
     private static List<String> hasPositiveBalance(Set<String> wallets) throws IOException {
         List<String> positiveWallets = new ArrayList<>();
         List<String> walletList = new ArrayList<>(wallets);
-
-        logger.info("Balance check for {} wallets", wallets.size());
 
         int batchSize = 5;
         for (int i = 0; i < walletList.size(); i += batchSize) {
@@ -160,7 +185,7 @@ public class SolanaAccountCreationScanner {
                     + "]"
                     + "}";
 
-            Map<String, Object> jsonResponse = processRequest(requestBody);
+            Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
             Map<String, Object> result = (Map<String, Object>) jsonResponse.get("result");
             List<Map<String, Object>> accounts = (List<Map<String, Object>>) result.get("value");
 
@@ -170,19 +195,13 @@ public class SolanaAccountCreationScanner {
                     Number lamportsNumber = (Number) account.get("lamports");
                     if (lamportsNumber != null) {
                         long lamports = lamportsNumber.longValue();
-                        logger.info("Lamports for wallet {}: {}", batch.get(j), lamports);
-                        if (lamports > 0) {
+                        if (lamports > MIN_LAMPORTS) {
                             positiveWallets.add(batch.get(j));
                         }
-                    } else {
-                        logger.warn("Lamports missing for wallet {}", batch.get(j));
                     }
-                } else {
-                    logger.warn("Null account object for wallet {}", batch.get(j));
                 }
             }
         }
-
         return positiveWallets;
     }
 
@@ -197,7 +216,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse = processRequest(requestBody);
+        Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
         List<Map<String, Object>> result = (List<Map<String, Object>>) jsonResponse.get("result");
 
         if (result.size() >= 80 || result.size() == 0) {
@@ -226,7 +245,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse = processRequest(requestBody);
+        Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
         if (jsonResponse.containsKey("result")) {
             Map<String, Object> transaction = (Map<String, Object>) jsonResponse.get("result");
             Number blockTimeNumber = (Number) transaction.get("blockTime");
@@ -261,17 +280,33 @@ public class SolanaAccountCreationScanner {
         return null;
     }
 
-    private static Map<String, Object> processRequest(String requestBody) throws IOException {
+    private static Object processRequest(String requestBody) throws IOException {
         Request request = new Request.Builder()
                 .url(RPC_URL)
                 .post(RequestBody.create(requestBody, MediaType.parse("application/json")))
                 .build();
 
-        Response response = client.newCall(request).execute();
-        String responseBody = response.body().string();
+        try (Response response = client.newCall(request).execute()) {
+            String responseBody = response.body().string();
+            // Определяем, является ли ответ массивом (batch-запрос) или объектом
+            if (responseBody.trim().startsWith("[")) {
+                return objectMapper.readValue(responseBody, new TypeReference<List<Map<String, Object>>>() {});
+            } else {
+                return objectMapper.readValue(responseBody, Map.class);
+            }
+        }
+    }
 
-        Map<String, Object> jsonResponse = objectMapper.readValue(responseBody, Map.class);
-        return jsonResponse;
+    private static void validateResponse(Map<String, Object> jsonResponse) {
+        if (jsonResponse.containsKey("error")) {
+            Map<String, Object> error = (Map<String, Object>) jsonResponse.get("error");
+            String errorMessage = (String) error.get("message");
+            throw new RuntimeException("RPC Error: " + errorMessage);
+        }
+
+        if (!jsonResponse.containsKey("result")) {
+            throw new RuntimeException("RPC Response missing 'result' field: " + jsonResponse);
+        }
     }
 
     private static List<Map<String, Object>> extractInstructions(Map<String, Object> transaction) {
