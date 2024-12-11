@@ -7,11 +7,9 @@ import java.util.concurrent.TimeUnit;
 public class SolanaScannerScheduler {
 
     public static void main(String[] args) {
-        // Создаем планировщик с одним потоком
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
-        // Задача, которую нужно выполнять каждые 10 минут
-        Runnable task = () -> {
+        Runnable accountCreationTask = () -> {
             try {
                 SolanaAccountCreationScanner.main(null); // Запускаем ваш основной класс
             } catch (Exception e) {
@@ -19,11 +17,18 @@ public class SolanaScannerScheduler {
                 e.printStackTrace();
             }
         };
+        Runnable defiScannerTask = () -> {
+            try {
+                SolanaDefiScanner.main(null);
+            } catch (Exception e) {
+                System.err.println("Ошибка при выполнении defiScannerTask: " + e.getMessage());
+                e.printStackTrace();
+            }
+        };
 
-        // Запуск задачи с начальной задержкой 0 секунд и интервалом 10 минут
-        scheduler.scheduleAtFixedRate(task, 0, 11 , TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(accountCreationTask, 0, 7, TimeUnit.MINUTES);
+        scheduler.scheduleAtFixedRate(defiScannerTask, 0, 10, TimeUnit.MINUTES);
 
-        // Примечание: приложение будет работать в бесконечном цикле, пока вы его не завершите.
-        System.out.println("Планировщик запущен. Задача будет выполняться каждые 9 минут.");
+        System.out.println("Планировщик запущен. Задачи выполняются по расписанию.");
     }
 }
