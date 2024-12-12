@@ -20,7 +20,6 @@ public class SolanaScannerScheduler {
                 e.printStackTrace();
             }
         };
-        Thread.sleep(3000);
         Runnable defiScannerTask = () -> {
             try {
                 SolanaDefiScanner.main(null);

@@ -90,62 +90,6 @@ public class SolanaDefiScanner {
 //        }
 //        return confirmedWallets;
 //    }
-//    private static List<String> checkWallets(List<String> wallets) throws IOException, InterruptedException {
-//        List<String> confirmedWallets = new ArrayList<>();
-//        int batchSize = 2;
-//        for (int i = 0; i < wallets.size(); i += batchSize) {
-//            Thread.sleep(1500);
-//            List<String> batchWallets = wallets.subList(i, Math.min(i + batchSize, wallets.size()));
-//            StringBuilder batchRequestBody = new StringBuilder("[");
-//
-//            for (int j = 0; j < batchWallets.size(); j++) {
-//                String wallet = batchWallets.get(j);
-//                batchRequestBody.append("{")
-//                        .append("\"jsonrpc\":\"2.0\",")
-//                        .append("\"id\":").append(j).append(",")
-//                        .append("\"method\":\"getSignaturesForAddress\",")
-//                        .append("\"params\": [")
-//                        .append("\"").append(wallet).append("\",")
-//                        .append("{\"limit\":50}")
-//                        .append("]}");
-//                if (j < batchWallets.size() - 1) {
-//                    batchRequestBody.append(",");
-//                }
-//            }
-//            batchRequestBody.append("]");
-//
-//            Object response = processRequestWithRetry(batchRequestBody.toString());
-//
-//            if (response instanceof List) {
-//                List<Map<String, Object>> jsonResponseList = (List<Map<String, Object>>) response;
-//
-//                for (int j = 0; j < jsonResponseList.size(); j++) {
-//                    Map<String, Object> jsonResponse = jsonResponseList.get(j);
-//                    String wallet = batchWallets.get(j);
-//                    List<Map<String, Object>> result = (List<Map<String, Object>>) jsonResponse.get("result");
-//
-//                    Set<String> signatures = new HashSet<>();
-//                    if (result != null) {
-//                        for (Map<String, Object> entry : result) {
-//                            Object error = entry.get("err");
-//                            if (error == null) {
-//                                Object signatureObj = entry.get("signature");
-//                                if (signatureObj instanceof String) {
-//                                    signatures.add((String) signatureObj);
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    boolean isConfirmed = processWalletSignatures(signatures, wallet);
-//                    if (isConfirmed) {
-//                        confirmedWallets.add(wallet);
-//                    }
-//                }
-//            }
-//        }
-//        return confirmedWallets;
-//    }
 
     private static List<String> checkWallets(List<String> wallets) throws IOException, InterruptedException {
         List<String> confirmedWallets = new ArrayList<>();

@@ -13,6 +13,7 @@ import test.sol.redis.ProcessedWalletsRedis;
 import test.sol.redis.ValidatedWalletsRedis;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -21,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class SolanaAccountCreationScanner {
@@ -28,7 +30,11 @@ public class SolanaAccountCreationScanner {
 //    https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2
     private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final OkHttpClient client = new OkHttpClient();
+    private static final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build();
     private static final Logger logger = LoggerFactory.getLogger(SolanaAccountCreationScanner.class);
     private static final Integer MIN_LAMPORTS = 400000000;
 
@@ -65,7 +71,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
+        Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
         List<Map<String, Object>> result = (List<Map<String, Object>>) jsonResponse.get("result");
 
         Set<String> signatures = new HashSet<>();
@@ -108,7 +114,7 @@ public class SolanaAccountCreationScanner {
             }
             batchRequestBody.append("]");
 
-            Object response = processRequest(batchRequestBody.toString());
+            Object response = processRequestWithRetry(batchRequestBody.toString());
             if (response instanceof List) {
                 List<Map<String, Object>> jsonResponseList = (List<Map<String, Object>>) response;
 
@@ -188,7 +194,7 @@ public class SolanaAccountCreationScanner {
                     + "]"
                     + "}";
 
-            Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
+            Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
             Map<String, Object> result = (Map<String, Object>) jsonResponse.get("result");
             List<Map<String, Object>> accounts = (List<Map<String, Object>>) result.get("value");
 
@@ -219,7 +225,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
+        Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
         List<Map<String, Object>> result = (List<Map<String, Object>>) jsonResponse.get("result");
 
         if (result.size() >= 80 || result.size() == 0) {
@@ -248,7 +254,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse =(Map<String, Object>) processRequest(requestBody);
+        Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
         if (jsonResponse.containsKey("result")) {
             Map<String, Object> transaction = (Map<String, Object>) jsonResponse.get("result");
             Number blockTimeNumber = (Number) transaction.get("blockTime");
@@ -305,6 +311,22 @@ public class SolanaAccountCreationScanner {
         Map<String, Object> message = (Map<String, Object>) transactionMap.get("message");
         List<Map<String, Object>> instructions = (List<Map<String, Object>>) message.get("instructions");
         return instructions;
+    }
+    private static Object processRequestWithRetry(String requestBody) throws IOException {
+        int maxRetries = 3;
+        int attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                return processRequest(requestBody);
+            } catch (SocketTimeoutException e) {
+                logger.warn("Timeout on attempt {}: {}", attempt + 1, e.getMessage());
+                attempt++;
+                if (attempt == maxRetries) {
+                    throw e;
+                }
+            }
+        }
+        return null;
     }
 }
 
