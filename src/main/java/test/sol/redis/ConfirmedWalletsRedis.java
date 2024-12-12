@@ -1,4 +1,4 @@
-package test.sol;
+package test.sol.redis;
 
 import redis.clients.jedis.Jedis;
 

@@ -1,4 +1,4 @@
-package test.sol;
+package test.sol.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +9,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import test.sol.redis.ProcessedWalletsRedis;
+import test.sol.redis.ValidatedWalletsRedis;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -42,7 +44,7 @@ public class SolanaAccountCreationScanner {
             logger.info("Wallets before validation - {}", createdWallets.size());
             List<String> wallets = processWallets(createdWallets);
             logger.info("Wallets after validation - {}", wallets.size());
-            ValidatedWalletsRedis.saveValidatedWallets(wallets);
+            ValidatedWalletsRedis.saveValidatedWalletsWithTTL(wallets);
             logger.info("Завершено. Найдено {} новых аккаунтов", wallets.size());
             wallets.forEach(account -> logger.info("Аккаунт: {}", account));
             long endTime = System.nanoTime();
@@ -82,12 +84,13 @@ public class SolanaAccountCreationScanner {
         return signatures;
     }
 
-    private static Set<String> processTransactions(Set<String> signatures) throws IOException {
+    private static Set<String> processTransactions(Set<String> signatures) throws IOException, InterruptedException {
         Set<String> createdAccounts = new HashSet<>();
         List<String> signatureList = new ArrayList<>(signatures);
         int batchSize = 5;
 
         for (int i = 0; i < signatureList.size(); i += batchSize) {
+//            Thread.sleep(1000);
             List<String> batchSignatures = signatureList.subList(i, Math.min(i + batchSize, signatureList.size()));
             StringBuilder batchRequestBody = new StringBuilder("[");
             for (int j = 0; j < batchSignatures.size(); j++) {
@@ -294,18 +297,6 @@ public class SolanaAccountCreationScanner {
             } else {
                 return objectMapper.readValue(responseBody, Map.class);
             }
-        }
-    }
-
-    private static void validateResponse(Map<String, Object> jsonResponse) {
-        if (jsonResponse.containsKey("error")) {
-            Map<String, Object> error = (Map<String, Object>) jsonResponse.get("error");
-            String errorMessage = (String) error.get("message");
-            throw new RuntimeException("RPC Error: " + errorMessage);
-        }
-
-        if (!jsonResponse.containsKey("result")) {
-            throw new RuntimeException("RPC Response missing 'result' field: " + jsonResponse);
         }
     }
 
