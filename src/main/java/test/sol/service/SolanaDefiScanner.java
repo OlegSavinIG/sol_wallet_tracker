@@ -35,16 +35,19 @@ public class SolanaDefiScanner {
     private static final Logger logger = LoggerFactory.getLogger(SolanaAccountCreationScanner.class);
     private static final Set<String> DEFI_URLS = Set.of(
             "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
+//            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
     );
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        logger.info("---SolanaDefiScanner работает");
+        long startTime = System.nanoTime();
+        logger.info("SolanaDefiScanner работает");
         List<String> wallets = ValidatedWalletsRedis.loadValidatedAccounts();
         logger.info("Loaded wallets {}", wallets.size());
         List<String> confirmedWallets = checkWallets(wallets);
         logger.info("Confirmed wallets {}", confirmedWallets.size());
+        long endTime = System.nanoTime();
+        System.out.println("DefiScanner working time - " + (endTime - startTime) / 1_000_000 + " ms");
         if (!confirmedWallets.isEmpty()) {
             String message = "Найдены подтвержденные кошельки " + confirmedWallets.size() + " : - \n" + String.join("- \n", confirmedWallets);
             TelegramMessageSandler.sendToTelegram(message);
@@ -93,9 +96,9 @@ public class SolanaDefiScanner {
 
     private static List<String> checkWallets(List<String> wallets) throws IOException, InterruptedException {
         List<String> confirmedWallets = new ArrayList<>();
-        int batchSize = 2;
+        int batchSize = 4;
         for (int i = 0; i < wallets.size(); i += batchSize) {
-            Thread.sleep(1500);
+            Thread.sleep(500);
             List<String> batchWallets = wallets.subList(i, Math.min(i + batchSize, wallets.size()));
             StringBuilder batchRequestBody = new StringBuilder("[");
 
@@ -160,10 +163,10 @@ public class SolanaDefiScanner {
 
     private static boolean validateSignatures(Set<String> actualSignatures) throws IOException, InterruptedException {
         List<String> signaturesList = new ArrayList<>(actualSignatures);
-        int batchSize = 4;
+        int batchSize = 2;
 
         for (int i = 0; i < signaturesList.size(); i += batchSize) {
-            Thread.sleep(2000);
+            Thread.sleep(500);
             List<String> batchSignatures = signaturesList.subList(i, Math.min(i + batchSize, signaturesList.size()));
 
             StringBuilder batchRequestBody = new StringBuilder("[");

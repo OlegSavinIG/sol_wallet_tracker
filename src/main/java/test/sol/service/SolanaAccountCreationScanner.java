@@ -41,7 +41,7 @@ public class SolanaAccountCreationScanner {
     public static void main(String[] args) {
         try {
             long startTime = System.nanoTime();
-            logger.info("---Получение подписей для SystemProgram...");
+            logger.info("Получение подписей для SolanaScanner...");
             Set<String> signatures = getSignaturesForSystemProgram();
             logger.info("Получено {} подписей.", signatures.size());
             logger.info("Обработка транзакций...");
@@ -71,32 +71,27 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
+        Map<String, Object> jsonResponse = (Map<String, Object>) processRequestWithRetry(requestBody);
         List<Map<String, Object>> result = (List<Map<String, Object>>) jsonResponse.get("result");
 
         Set<String> signatures = new HashSet<>();
         if (result != null) {
-            for (Map<String, Object> entry : result) {
-                Object error = entry.get("err");
-                if (error == null) {
-                    Object signatureObj = entry.get("signature");
-                    if (signatureObj instanceof String) {
-                        signatures.add((String) signatureObj);
-                    }
-                }
-            }
+            return result.stream()
+                    .filter(entry -> entry.get("err") == null)
+                    .map(entry -> (String) entry.get("signature"))
+                    .collect(Collectors.toSet());
         }
 
         return signatures;
     }
 
-    private static Set<String> processTransactions(Set<String> signatures) throws IOException, InterruptedException {
+
+    private static Set<String> processTransactions(Set<String> signatures) throws IOException {
         Set<String> createdAccounts = new HashSet<>();
         List<String> signatureList = new ArrayList<>(signatures);
         int batchSize = 5;
 
         for (int i = 0; i < signatureList.size(); i += batchSize) {
-//            Thread.sleep(1000);
             List<String> batchSignatures = signatureList.subList(i, Math.min(i + batchSize, signatureList.size()));
             StringBuilder batchRequestBody = new StringBuilder("[");
             for (int j = 0; j < batchSignatures.size(); j++) {
@@ -194,7 +189,7 @@ public class SolanaAccountCreationScanner {
                     + "]"
                     + "}";
 
-            Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
+            Map<String, Object> jsonResponse = (Map<String, Object>) processRequestWithRetry(requestBody);
             Map<String, Object> result = (Map<String, Object>) jsonResponse.get("result");
             List<Map<String, Object>> accounts = (List<Map<String, Object>>) result.get("value");
 
@@ -225,7 +220,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
+        Map<String, Object> jsonResponse = (Map<String, Object>) processRequestWithRetry(requestBody);
         List<Map<String, Object>> result = (List<Map<String, Object>>) jsonResponse.get("result");
 
         if (result.size() >= 80 || result.size() == 0) {
@@ -254,7 +249,7 @@ public class SolanaAccountCreationScanner {
                 + "]"
                 + "}";
 
-        Map<String, Object> jsonResponse =(Map<String, Object>) processRequestWithRetry(requestBody);
+        Map<String, Object> jsonResponse = (Map<String, Object>) processRequestWithRetry(requestBody);
         if (jsonResponse.containsKey("result")) {
             Map<String, Object> transaction = (Map<String, Object>) jsonResponse.get("result");
             Number blockTimeNumber = (Number) transaction.get("blockTime");
@@ -297,21 +292,15 @@ public class SolanaAccountCreationScanner {
 
         try (Response response = client.newCall(request).execute()) {
             String responseBody = response.body().string();
-            // Определяем, является ли ответ массивом (batch-запрос) или объектом
             if (responseBody.trim().startsWith("[")) {
-                return objectMapper.readValue(responseBody, new TypeReference<List<Map<String, Object>>>() {});
+                return objectMapper.readValue(responseBody, new TypeReference<List<Map<String, Object>>>() {
+                });
             } else {
                 return objectMapper.readValue(responseBody, Map.class);
             }
         }
     }
 
-    private static List<Map<String, Object>> extractInstructions(Map<String, Object> transaction) {
-        Map<String, Object> transactionMap = (Map<String, Object>) transaction.get("transaction");
-        Map<String, Object> message = (Map<String, Object>) transactionMap.get("message");
-        List<Map<String, Object>> instructions = (List<Map<String, Object>>) message.get("instructions");
-        return instructions;
-    }
     private static Object processRequestWithRetry(String requestBody) throws IOException {
         int maxRetries = 3;
         int attempt = 0;
@@ -328,6 +317,14 @@ public class SolanaAccountCreationScanner {
         }
         return null;
     }
+
+    private static List<Map<String, Object>> extractInstructions(Map<String, Object> transaction) {
+        Map<String, Object> transactionMap = (Map<String, Object>) transaction.get("transaction");
+        Map<String, Object> message = (Map<String, Object>) transactionMap.get("message");
+        List<Map<String, Object>> instructions = (List<Map<String, Object>>) message.get("instructions");
+        return instructions;
+    }
+
 }
 
 
