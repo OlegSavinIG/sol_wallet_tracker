@@ -1,11 +1,10 @@
-package test.sol.pojo.transaction;
+package test.sol.pojo.signature;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record TransactionResponse(
-        @JsonProperty("result") TransactionResult result,
-        @JsonProperty("id") int id
+public record SignatureResponseResult(
+        @JsonProperty("signature") String signature,
+        @JsonProperty("err") Object err
 ) {}
-
