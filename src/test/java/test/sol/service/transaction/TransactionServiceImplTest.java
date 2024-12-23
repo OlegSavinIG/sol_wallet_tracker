@@ -39,8 +39,8 @@ class TransactionServiceImplTest {
 
         Mockito.when(transactionResult.transaction()).thenReturn(transactionData);
         Mockito.when(transactionData.message()).thenReturn(message);
-        Mockito.when(message.instructions()).thenReturn(instructions);
-        Mockito.when(instructions.parsed()).thenReturn(List.of(parsed));
+        Mockito.when(message.instructions()).thenReturn(List.of(instructions));
+        Mockito.when(instructions.parsed()).thenReturn(parsed);
         Mockito.when(parsed.type()).thenReturn(type);
         Mockito.when(parsed.info()).thenReturn(new TransactionInfo(account));
 
@@ -53,8 +53,8 @@ class TransactionServiceImplTest {
         TransactionResult result1 = createMockTransactionResult("transfer", "account1");
         TransactionResult result2 = createMockTransactionResult("non-transfer", "account2");
 
-        TransactionResponse response1 = new TransactionResponse(result1);
-        TransactionResponse response2 = new TransactionResponse(result2);
+        TransactionResponse response1 = new TransactionResponse(result1, 1);
+        TransactionResponse response2 = new TransactionResponse(result2, 2);
         List<TransactionResponse> transactions = List.of(response1, response2);
 
         // Act

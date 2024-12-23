@@ -70,7 +70,7 @@ class SignatureClientTest {
                 .thenReturn(mockResponse);
 
         // Act
-        SignatureResponseResult response = signatureClient.getSignaturesForOneWallet(wallet);
+        SignaturesResponse response = signatureClient.getSignaturesForOneWallet(wallet);
 
         // Assert
         assertNotNull(response);

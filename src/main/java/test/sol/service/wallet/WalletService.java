@@ -79,8 +79,8 @@ public class WalletService {
     public List<String> getWalletsWithDefiUrl(
             Map<String, Set<String>> signaturesForWallets,
             List<String> defiUrls) throws IOException, InterruptedException {
+        long startTime = System.nanoTime();
         List<String> confirmedWallets = new ArrayList<>();
-        String pumpUrl = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
 
         for (Map.Entry<String, Set<String>> entry : signaturesForWallets.entrySet()) {
             Thread.sleep(500);
@@ -110,6 +110,8 @@ public class WalletService {
                 }
             }
         }
+        long endTime = System.nanoTime();
+        System.out.println("getWalletsWithDefiUrl working time - " + (endTime - startTime) / 1_000_000 + " ms");
         return confirmedWallets;
     }
 

@@ -2,6 +2,7 @@ package test.sol.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.ConnectionPool;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -30,6 +31,7 @@ public class RequestSender {
                 .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .connectionPool(new ConnectionPool(10, 5, TimeUnit.MINUTES))
                 .build();
         this.objectMapper = new ObjectMapper();
         this.logger = LoggerFactory.getLogger(RequestSender.class);

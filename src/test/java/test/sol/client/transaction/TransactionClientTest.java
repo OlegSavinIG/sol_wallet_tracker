@@ -43,8 +43,8 @@ class TransactionClientTest {
         // Arrange
         Set<String> signatures = Set.of("sig1", "sig2", "sig3", "sig4", "sig5");
         String batchRequestBody = "mockBatchRequest";
-        TransactionResponse response1 = new TransactionResponse(null);
-        TransactionResponse response2 = new TransactionResponse(null);
+        TransactionResponse response1 = new TransactionResponse(null, 1);
+        TransactionResponse response2 = new TransactionResponse(null, 2);
         List<TransactionResponse> mockResponses = List.of(response1, response2);
 
         when(requestBuilder.buildBatchRequest(anyList(), "getTransaction")).thenReturn(batchRequestBody);

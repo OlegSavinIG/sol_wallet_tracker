@@ -41,7 +41,7 @@ public class SolanaScannerScheduler {
                     } else {
                         try {
                             System.out.println("Delaying defiScannerTask for 4 minutes in day mode");
-                            Thread.sleep(4 * 60 * 1000);
+                            Thread.sleep(3 * 60 * 1000);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
@@ -72,7 +72,7 @@ public class SolanaScannerScheduler {
 
     private static boolean isNightPeriod() {
         LocalTime now = LocalTime.now();
-        LocalTime startNight = LocalTime.of(2, 0);
+        LocalTime startNight = LocalTime.of(3, 0);
         LocalTime endNight = LocalTime.of(9, 0);
         boolean isNight = !now.isBefore(startNight) && !now.isAfter(endNight);
         System.out.println("isNightPeriod: " + isNight + " at: " + now);

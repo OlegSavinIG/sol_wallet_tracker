@@ -59,7 +59,7 @@ public class SolanaAccountCreationScanner {
 
             validatedWallets.forEach(System.out::println);
             long endTime = System.nanoTime();
-            System.out.println("Проверка заняла " + (endTime - startTime) / 1_000_000 + " ms");
+            System.out.println("SolanaAccountCreationScanner working time " + (endTime - startTime) / 1_000_000 + " ms");
         } catch (Exception e) {
             logger.error("Произошла ошибка при выполнении программы.", e);
         }

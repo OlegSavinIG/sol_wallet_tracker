@@ -37,6 +37,7 @@ public class SolanaDefiScanner {
         logger.info("Loaded wallets from Redis {}", wallets.size());
 
         Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
+
         Map<String, Set<String>> validatedSignatures = signaturesForWallets.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
