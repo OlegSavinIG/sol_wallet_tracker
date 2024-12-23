@@ -1,4 +1,4 @@
-package test.sol;
+package test.sol.redis;
 
 import redis.clients.jedis.Jedis;
 
@@ -13,6 +13,13 @@ public class ConfirmedWalletsRedis {
             for (String account : confirmed) {
                 jedis.rpush(CONFIRMED_WALLET_KEY, account);
             }
+        } catch (Exception e) {
+            System.err.println("Ошибка сохранения аккаунтов в Redis: " + e.getMessage());
+        }
+    }
+        public static void save(String wallet) {
+        try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
+                jedis.rpush(CONFIRMED_WALLET_KEY, wallet);
         } catch (Exception e) {
             System.err.println("Ошибка сохранения аккаунтов в Redis: " + e.getMessage());
         }
