@@ -14,7 +14,7 @@ public class ValidatedWalletsRedis {
         try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
             for (String account : newAccounts) {
                 String accountKey = VALIDATED_WALLETS_KEY + ":" + account;
-                jedis.setex(accountKey, 86400, account); // 86400 секунд = 24 часа
+                jedis.setex(accountKey, 57600, account); // 86400 секунд = 24 часа
             }
         } catch (Exception e) {
             System.err.println("Ошибка сохранения аккаунтов в Redis с TTL: " + e.getMessage());
