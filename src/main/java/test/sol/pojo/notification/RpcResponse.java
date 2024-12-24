@@ -6,26 +6,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RpcResponse {
     private Params params;
-    @JsonProperty("apiVersion")
-    private String apiVersion;
-    String method;
-    private long slot;
-   private int subscription;
+    private Integer result;
+    private Integer id;
 
-    public String getApiVersion() {
-        return apiVersion;
+    public Integer getResult() {
+        return result;
     }
 
-    public void setApiVersion(String apiVersion) {
-        this.apiVersion = apiVersion;
+    public void setResult(Integer result) {
+        this.result = result;
     }
 
-    public long getSlot() {
-        return slot;
+    public Integer getId() {
+        return id;
     }
 
-    public void setSlot(long slot) {
-        this.slot = slot;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public Params getParams() {
@@ -36,19 +33,5 @@ public class RpcResponse {
         this.params = params;
     }
 
-    public String getMethod() {
-        return method;
-    }
 
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    public int getSubscription() {
-        return subscription;
-    }
-
-    public void setSubscription(int subscription) {
-        this.subscription = subscription;
-    }
 }

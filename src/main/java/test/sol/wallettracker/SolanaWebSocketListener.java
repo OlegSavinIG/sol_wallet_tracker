@@ -1,13 +1,12 @@
 package test.sol.wallettracker;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.SolanaAccountNotifier;
-import test.sol.pojo.notification.Params;
 import test.sol.pojo.notification.RpcResponse;
-import test.sol.pojo.notification.Value;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -26,30 +25,35 @@ public class SolanaWebSocketListener implements WebSocket.Listener {
     @Override
     public void onOpen(WebSocket webSocket) {
         logger.info("✅ WebSocket connection reopened.");
-        reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+        reconnectAttempts = 0;
         webSocket.request(1);
     }
 
     @Override
     public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
         logger.info("🔄 Change detected: {}", data);
-
         try {
             RpcResponse response = gson.fromJson(data.toString(), RpcResponse.class);
-            if (response != null && response.getParams() != null) {
-                Params params = response.getParams();
-                if (params.getResult() != null && params.getResult().getValue() != null) {
-                    Value value = params.getResult().getValue();
-                    String address = value.getOwner();
-                    notificationHandler.handleNotification(address, value);
-                }
+            if (response.getResult() != null && response.getId() != null) {
+                int result = response.getResult();
+                int id = response.getId();
+                logger.info("✅ Specific response received: result={}, id={}", result, id);
+                notificationHandler.handleSubscribeNotification(result, id);
+            } else if (response.getParams() != null) {
+                int subscription = response.getParams().getSubscription();
+                logger.info("🔔 Notification received: subscription={}", subscription);
+                notificationHandler.handleNotification(subscription);
+            } else {
+                logger.warn("⚠️ Unexpected JSON structure: {}", data);
             }
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | IllegalStateException e) {
             logger.error("❌ Error parsing JSON: {}", e.getMessage());
         }
+
         webSocket.request(1);
         return null;
     }
+
 
     @Override
     public void onError(WebSocket webSocket, Throwable error) {

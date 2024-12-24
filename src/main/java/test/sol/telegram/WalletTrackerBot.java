@@ -8,7 +8,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-import test.sol.wallettracker.WalletStorage;
+import test.sol.wallettracker.queuelistener.RemoveWalletQueue;
+import test.sol.wallettracker.queuelistener.WalletQueue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
     private static final Set<String> walletAddresses = new HashSet<>();
     private static final Map<String, String> userWalletMapping = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(WalletTrackerBot.class);
+
     public static void main(String[] args) {
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
@@ -49,7 +51,7 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
             String messageText = update.getMessage().getText();
             String chatId = update.getMessage().getChatId().toString();
 
-            logger.debug("Received message: {}", messageText);
+            logger.info("Received message: {}", messageText);
 
             if (messageText.startsWith("/add_wallet")) {
                 handleAddWallet(messageText, chatId);
@@ -58,7 +60,12 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
             } else if (messageText.startsWith("/remove_wallet")) {
                 handleRemoveWallet(messageText, chatId);
             } else {
-                sendMessage(chatId, "ℹ️ Available commands:\n/add_wallet <wallet_address> - Add a new wallet\n/list_wallets - List all wallets\n/remove_wallet <wallet_address> - Remove a wallet");
+                sendMessage(
+                        chatId,
+                        "ℹ️ Available commands:\n/add_wallet <wallet_address>" +
+                                " - Add a new wallet\n/list_wallets" +
+                                " - List all wallets\n/remove_wallet <wallet_address>" +
+                                " - Remove a wallet");
             }
         }
     }
@@ -103,16 +110,23 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
             return;
         }
         String walletAddress = parts[1];
-        if (walletAddresses.remove(walletAddress)) {
-            userWalletMapping.remove(walletAddress);
-            sendMessage(chatId, "✅ Wallet removed successfully: " + walletAddress);
+        if (isValidWalletAddress(walletAddress)) {
+            if (walletAddresses.remove(walletAddress)) {
+                userWalletMapping.remove(walletAddress);
+                RemoveWalletQueue.addWallet(walletAddress); // Добавляем в очередь на удаление
+                sendMessage(chatId, "✅ Wallet removal queued: " + walletAddress);
+                sendMessage(chatId, "✅ Wallet removed successfully: " + walletAddress);
+            } else {
+                sendMessage(chatId, "⚠️ Wallet not found: " + walletAddress);
+            }
         } else {
-            sendMessage(chatId, "⚠️ Wallet not found: " + walletAddress);
+            logger.error("Invalid wallet address: {}", walletAddress);
+            sendMessage(chatId, "❌ Invalid wallet address.");
         }
     }
 
     private boolean isValidWalletAddress(String address) {
-        return Pattern.matches("^[A-Za-z0-9]{44}$", address);
+        return Pattern.matches("^[A-Za-z0-9]{43,48}$", address);
     }
 
     private void sendMessage(String chatId, String text) {
@@ -127,7 +141,7 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
     }
 
     private void notifyTrackingService(String walletAddress) {
-        WalletStorage.addWallet(walletAddress);
+        WalletQueue.addWallet(walletAddress);
         logger.info("✅ Wallet added to tracking service: {}", walletAddress);
     }
 

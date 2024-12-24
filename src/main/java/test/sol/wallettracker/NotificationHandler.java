@@ -8,17 +8,22 @@ public class NotificationHandler {
     private static final Logger logger = LoggerFactory.getLogger(NotificationHandler.class);
     private static final WalletTrackerBot bot = new WalletTrackerBot();
 
-    public void handleNotification(String address, Value value) {
-        logger.info("\uD83D\uDCB3 Address: {}", address);
-        logger.info("\uD83D\uDCB0 Balance: {} lamports", value.getLamports());
+    public void handleNotification(Integer subscription) {
+        String wallet = SubscriptionWalletStorage.getWalletBySubscription(subscription);
+        logger.info("\uD83D\uDCB3 Address: {}", wallet);
+//        logger.info("\uD83D\uDCB0 Balance: {} lamports", value.getLamports());
 
-        processValue(address, value);
-        bot.notifyUserAboutEvent(address, "Balance: " + value.getLamports() + " lamports");
+//        processValue(address, value);
+        bot.notifyUserAboutEvent(wallet , "New event");
     }
 
     private void processValue(String address, Value value) {
         // Placeholder for actual processing logic
         logger.info("Processing value for address: {} with balance: {} lamports", address, value.getLamports());
         // Example: Save to database or trigger an external service
+    }
+
+    public void handleSubscribeNotification(int result, int id) {
+        SubscriptionWalletStorage.addSubscriptionWithId(result, id);
     }
 }
