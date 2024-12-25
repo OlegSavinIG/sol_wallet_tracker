@@ -43,11 +43,14 @@ public class DefiNotificationHandler {
                     .collect(Collectors.toSet());
 
             Set<String> signaturesFromRedis = SignatureRedis.loadWalletSignatures(wallet);
+            logger.info("Signatures from Redis {} " +
+                    "and actual signatures {} ", signaturesFromRedis.size(), signatures.size());
             signatures.removeAll(signaturesFromRedis);
             SignatureRedis.saveWalletSignatures(signatures, wallet);
 
             outer:
             for (String signature : signatures) {
+                logger.info("Validating transactions for wallet {} ", wallet);
                 TransactionResponse transaction = transactionClient.getSingleTransaction(signature);
                 String logMessage = transaction.result().meta().logMessages().toString();
                 for (String defiUrl : DEFI_URLS) {

@@ -27,10 +27,13 @@ public class SolanaDefiWebSocketValidator {
         subscriptionService.subscribeToWallets(wallets);
 
         NotActivatedWalletsProcessor walletsProcessor = new NotActivatedWalletsProcessor(subscriptionService);
+        UnsubscribeWalletProcessor unsubscribeWalletProcessor = new UnsubscribeWalletProcessor(subscriptionService);
+        unsubscribeWalletProcessor.startProcessing();
         walletsProcessor.startProcessing();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             walletsProcessor.stopProcessing();
+            unsubscribeWalletProcessor.stopProcessing();
             logger.info("✅ Application stopped.");
         }));
     }

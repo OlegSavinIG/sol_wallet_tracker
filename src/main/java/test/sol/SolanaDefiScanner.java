@@ -60,6 +60,7 @@ public class SolanaDefiScanner {
                 wallets.removeAll(confirmedWallets);
             }
             if (!wallets.isEmpty()) {
+                System.out.printf("Not activated wallets saved {}", wallets.size());
                 NotActivatedWalletsRedis.saveWithTTL(wallets);
             }
             NotActivatedWalletsQueue.addWallets(wallets);
@@ -74,7 +75,7 @@ public class SolanaDefiScanner {
                 ConfirmedWalletsRedis.saveConfirmedWallets(confirmedWallets);
                 SignatureRedis.removeWalletSignatures(confirmedWallets);
             }
-        }  catch (IOException e) {
+        } catch (IOException e) {
             logger.error("IOException occurred in SolanaDefiScanner: {}", e.getMessage(), e);
         } catch (InterruptedException e) {
             logger.error("InterruptedException occurred in SolanaDefiScanner: {}", e.getMessage(), e);

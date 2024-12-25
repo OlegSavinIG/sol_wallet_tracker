@@ -21,6 +21,7 @@ public class NotActivatedWalletsQueue {
     }
 
     public static void addWallets(List<String> wallets) {
+        System.out.println("wallet added to NotActiveQueue");
         queue.addAll(wallets);
     }
 }

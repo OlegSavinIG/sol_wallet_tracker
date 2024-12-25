@@ -2,6 +2,7 @@ package test.sol.defiwebsocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import test.sol.utils.WalletIdGenerator;
 import test.sol.wallettracker.SubscriptionWalletStorage;
 
 import java.net.http.WebSocket;
@@ -14,7 +15,7 @@ public class WalletsSubscriptionService {
     private static final Logger logger = LoggerFactory.getLogger(WalletsSubscriptionService.class);
     private final WebSocket webSocket;
     private final Map<Integer, String> subscriptionMap = new ConcurrentHashMap<>();
-    private final AtomicInteger walletId = new AtomicInteger(1);
+//    private final AtomicInteger walletId = new AtomicInteger(1);
 
     public WalletsSubscriptionService(WebSocket webSocket) {
         this.webSocket = webSocket;
@@ -23,7 +24,7 @@ public class WalletsSubscriptionService {
     public void subscribeToWallets(List<String> wallets) {
         if (!wallets.isEmpty()) {
             for (String wallet : wallets) {
-                int id = walletId.getAndIncrement();
+                int id = WalletIdGenerator.getNextId();
                 subscriptionMap.put(id, wallet);
                 SubscriptionWalletStorage.addWalletWithId(id, wallet);
                 String subscriptionMessage = createAccountSubscriptionMessage(wallet, id);
@@ -36,7 +37,7 @@ public class WalletsSubscriptionService {
     public void subscribeToWallet(String wallet) {
         logger.info("Subscribe process activated with wallet {}", wallet);
         if (!SubscriptionWalletStorage.isContainsWallet(wallet)) {
-            int id = walletId.getAndIncrement();
+            int id = WalletIdGenerator.getNextId();
             subscriptionMap.put(id, wallet);
             SubscriptionWalletStorage.addWalletWithId(id, wallet);
             String subscriptionMessage = createAccountSubscriptionMessage(wallet, id);
