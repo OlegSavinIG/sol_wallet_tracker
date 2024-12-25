@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.telegram.WalletTrackerBot;
 import test.sol.wallettracker.queuelistener.RemoveWalletQueue;
-import test.sol.wallettracker.queuelistener.WalletQueue;
+import test.sol.wallettracker.queuelistener.AddWalletQueue;
 
 import java.util.Map;
 import java.util.Set;
@@ -83,7 +83,7 @@ public class WalletHandlerService {
     }
 
     private void notifyTrackingService(String walletAddress) {
-        WalletQueue.addWallet(walletAddress);
+        AddWalletQueue.addWallet(walletAddress);
         logger.info("✅ Wallet added to tracking service: {}", walletAddress);
     }
 }

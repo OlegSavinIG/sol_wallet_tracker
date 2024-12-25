@@ -1,8 +1,9 @@
-package test.sol.wallettracker.queuelistener;
+package test.sol.defiwebsocket;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class WalletQueue {
+public class UnsubscribeWalletsQueue {
     private static final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
 
     public static void addWallet(String walletAddress) {
@@ -18,5 +19,8 @@ public class WalletQueue {
     public static boolean hasWallets() {
         return !queue.isEmpty();
     }
-}
 
+    public static void addWallets(List<String> wallets) {
+        queue.addAll(wallets);
+    }
+}

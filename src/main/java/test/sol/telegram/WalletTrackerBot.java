@@ -116,7 +116,8 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
         } else {
             sendMessage(
                     chatId,
-                    "ℹ️ Available commands:\n/add_wallet <wallet_address>" +
+                    "ℹ️ Available commands:\n/start" +
+                            "\n/add_wallet <wallet_address>" +
                             " - Add a new wallet\n/list_wallets" +
                             " - List all wallets\n/remove_wallet <wallet_address>" +
                             " - Remove a wallet");

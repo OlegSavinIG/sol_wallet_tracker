@@ -5,7 +5,6 @@ import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.pojo.notification.RpcResponse;
-import test.sol.wallettracker.NotificationHandler;
 import test.sol.wallettracker.SolanaWebSocketListener;
 
 import java.io.IOException;
@@ -47,7 +46,7 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
             } else {
                 logger.warn("⚠️ Unexpected JSON structure: {}", data);
             }
-        } catch (JsonSyntaxException | IllegalStateException | IOException e) {
+        } catch (JsonSyntaxException | IllegalStateException e) {
             logger.error("❌ Error parsing JSON: {}", e.getMessage());
         }
 

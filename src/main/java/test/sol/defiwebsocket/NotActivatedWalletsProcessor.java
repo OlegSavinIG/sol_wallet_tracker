@@ -1,15 +1,13 @@
-package test.sol.wallettracker.queuelistener;
-
-import test.sol.wallettracker.AccountSubscriptionService;
+package test.sol.defiwebsocket;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class WalletProcessor {
-    private final AccountSubscriptionService subscriptionService;
+public class NotActivatedWalletsProcessor {
+    private final WalletsSubscriptionService subscriptionService;
     private final ExecutorService executorService;
 
-    public WalletProcessor(AccountSubscriptionService subscriptionService) {
+    public NotActivatedWalletsProcessor(WalletsSubscriptionService subscriptionService) {
         this.subscriptionService = subscriptionService;
         this.executorService = Executors.newSingleThreadExecutor();
     }
@@ -17,8 +15,8 @@ public class WalletProcessor {
     public void startProcessing() {
         executorService.submit(() -> {
             while (!Thread.currentThread().isInterrupted()) {
-                if (WalletQueue.hasWallets()) {
-                    String wallet = WalletQueue.pollWallet();
+                if (NotActivatedWalletsQueue.hasWallets()) {
+                    String wallet = NotActivatedWalletsQueue.pollWallet();
                     System.out.println("PROCESSOR: Found new wallet " + wallet);
                     if (wallet != null) {
                         System.out.println("Wallet processor -> send to service ");
@@ -26,7 +24,7 @@ public class WalletProcessor {
                     }
                 } else {
                     try {
-                        Thread.sleep(500); // Ждем новые кошельки
+                        Thread.sleep(100); // Ждем новые кошельки
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -39,4 +37,3 @@ public class WalletProcessor {
         executorService.shutdownNow();
     }
 }
-

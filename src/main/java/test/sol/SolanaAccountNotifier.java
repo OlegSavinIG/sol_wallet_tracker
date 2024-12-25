@@ -11,12 +11,11 @@ import test.sol.wallettracker.AccountSubscriptionService;
 import test.sol.wallettracker.SubscriptionWalletStorage;
 import test.sol.wallettracker.queuelistener.RemoveWalletProcessor;
 import test.sol.wallettracker.SolanaWebSocketListener;
-import test.sol.wallettracker.queuelistener.WalletProcessor;
+import test.sol.wallettracker.queuelistener.AddWalletProcessor;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
-import java.util.List;
 import java.util.Set;
 
 public class SolanaAccountNotifier {
@@ -37,19 +36,19 @@ public class SolanaAccountNotifier {
         AccountSubscriptionService subscriptionService = new AccountSubscriptionService(webSocket);
         subscriptionService.subscribeToAddresses(wallets);
 
-        WalletProcessor processor = new WalletProcessor(subscriptionService);
-        RemoveWalletProcessor removeProcessor = new RemoveWalletProcessor(subscriptionService);
+        AddWalletProcessor addWalletProcessor = new AddWalletProcessor(subscriptionService);
+        RemoveWalletProcessor removeWalletProcessor = new RemoveWalletProcessor(subscriptionService);
 
-        removeProcessor.startProcessing();
-        processor.startProcessing();
+        removeWalletProcessor.startProcessing();
+        addWalletProcessor.startProcessing();
 
         WalletTrackerBot bot = new WalletTrackerBot();
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(bot);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            processor.stopProcessing();
-            removeProcessor.stopProcessing();
+            addWalletProcessor.stopProcessing();
+            removeWalletProcessor.stopProcessing();
 
             TrackWalletsRedis.saveWallets(SubscriptionWalletStorage.getAllWallets());
             logger.info("✅ Application stopped.");

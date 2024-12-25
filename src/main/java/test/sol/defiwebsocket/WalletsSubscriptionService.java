@@ -20,14 +20,16 @@ public class WalletsSubscriptionService {
         this.webSocket = webSocket;
     }
 
-    public void subscribeToAddresses(List<String> wallets) {
-        for (String wallet : wallets) {
-            int id = walletId.getAndIncrement();
-            subscriptionMap.put(id, wallet);
-            SubscriptionWalletStorage.addWalletWithId(id, wallet);
-            String subscriptionMessage = createAccountSubscriptionMessage(wallet, id);
-            webSocket.sendText(subscriptionMessage, true);
-            logger.info("🔔 Subscribed to wallet: {} with subscription ID: {}", wallet, id);
+    public void subscribeToWallets(List<String> wallets) {
+        if (!wallets.isEmpty()) {
+            for (String wallet : wallets) {
+                int id = walletId.getAndIncrement();
+                subscriptionMap.put(id, wallet);
+                SubscriptionWalletStorage.addWalletWithId(id, wallet);
+                String subscriptionMessage = createAccountSubscriptionMessage(wallet, id);
+                webSocket.sendText(subscriptionMessage, true);
+                logger.info("🔔 Subscribed to wallet: {} with subscription ID: {}", wallet, id);
+            }
         }
     }
 
@@ -45,12 +47,7 @@ public class WalletsSubscriptionService {
         }
     }
 
-
-    private String createAccountSubscriptionMessage(String accountAddress, int id) {
-        return String.format("{\"jsonrpc\":\"2.0\",\"id\":%d,\"method\":\"accountSubscribe\",\"params\":[\"%s\",{\"commitment\":\"confirmed\"}]}", id, accountAddress);
-    }
-
-    public void unsubscribeFromAddress(String wallet) {
+    public void unsubscribeFromWallet(String wallet) {
         if (SubscriptionWalletStorage.isContainsWallet(wallet)) {
             int subscription = SubscriptionWalletStorage.getSubscriptionByWallet(wallet);
             String unsubscribeMessage = createAccountUnsubscriptionMessage(subscription);
@@ -61,6 +58,11 @@ public class WalletsSubscriptionService {
             logger.warn("⚠️ No subscription found for wallet: {}", wallet);
         }
     }
+
+    private String createAccountSubscriptionMessage(String accountAddress, int id) {
+        return String.format("{\"jsonrpc\":\"2.0\",\"id\":%d,\"method\":\"accountSubscribe\",\"params\":[\"%s\",{\"commitment\":\"confirmed\"}]}", id, accountAddress);
+    }
+
 
     private String createAccountUnsubscriptionMessage(int subscriptionId) {
         return String.format("{\"jsonrpc\":\"2.0\",\"id\":%d,\"method\":\"accountUnsubscribe\",\"params\":[%d]}", subscriptionId, subscriptionId);
