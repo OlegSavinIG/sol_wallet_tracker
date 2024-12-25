@@ -19,7 +19,6 @@ public class SubscriptionWalletStorage {
        return new HashSet<>(walletSubscriptionMap.keySet());
     }
     public static boolean isContainsWallet(String wallet) {
-        logger.info("Wallet contains");
         return idWalletMap.containsValue(wallet);
     }
 

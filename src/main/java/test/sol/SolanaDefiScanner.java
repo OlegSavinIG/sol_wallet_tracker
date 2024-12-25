@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import test.sol.client.signature.SignatureClient;
 import test.sol.pojo.signature.SignaturesResponse;
 import test.sol.redis.ConfirmedWalletsRedis;
+import test.sol.redis.NotActivatedWalletsRedis;
 import test.sol.redis.SignatureRedis;
 import test.sol.redis.ValidatedWalletsRedis;
 import test.sol.service.signature.SignatureService;
@@ -34,6 +35,7 @@ public class SolanaDefiScanner {
         long startTime = System.nanoTime();
         logger.info("SolanaDefiScanner работает");
         List<String> wallets = ValidatedWalletsRedis.loadValidatedAccounts();
+        ValidatedWalletsRedis.removeValidatedWallets(wallets);
         logger.info("Loaded wallets from Redis {}", wallets.size());
 
         Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
@@ -46,6 +48,9 @@ public class SolanaDefiScanner {
 
         List<String> confirmedWallets = walletService.getWalletsWithDefiUrl(validatedSignatures, DEFI_URLS);
         logger.info("Confirmed wallets {}", confirmedWallets.size());
+
+        wallets.removeAll(confirmedWallets);
+        NotActivatedWalletsRedis.saveWithTTL(wallets);
 
         long endTime = System.nanoTime();
         System.out.println("DefiScanner working time - " + (endTime - startTime) / 1_000_000 + " ms");

@@ -10,7 +10,7 @@ public class NotificationHandler {
 
     public void handleNotification(Integer subscription) {
         String wallet = SubscriptionWalletStorage.getWalletBySubscription(subscription);
-        logger.info("\uD83D\uDCB3 Address: {}", wallet);
+        logger.info("\uD83D\uDCB3 Wallet: {}", wallet);
 //        logger.info("\uD83D\uDCB0 Balance: {} lamports", value.getLamports());
 
 //        processValue(address, value);
