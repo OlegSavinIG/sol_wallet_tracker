@@ -17,10 +17,10 @@ public class UnsubscribeWalletProcessor {
             while (!Thread.currentThread().isInterrupted()) {
                 if (UnsubscribeWalletsQueue.hasWallets()) {
                     String wallet = UnsubscribeWalletsQueue.pollWallet();
-                    System.out.println("PROCESSOR: Found new wallet " + wallet);
+                    System.out.println("PROCESSOR: Unsubscribed from wallet " + wallet);
                     if (wallet != null) {
-                        System.out.println("Wallet processor -> send to service ");
-                        subscriptionService.subscribeToWallet(wallet);
+                        System.out.println("Unsubscribe processor -> send to service ");
+                        subscriptionService.unsubscribeFromWallet(wallet);
                     }
                 } else {
                     try {

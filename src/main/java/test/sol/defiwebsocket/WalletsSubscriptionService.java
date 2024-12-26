@@ -9,7 +9,6 @@ import java.net.http.WebSocket;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class WalletsSubscriptionService {
     private static final Logger logger = LoggerFactory.getLogger(WalletsSubscriptionService.class);

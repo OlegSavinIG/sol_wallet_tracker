@@ -57,8 +57,8 @@ public class SolanaScannerScheduler {
                         }
                     } else {
                         try {
-                            System.out.println("Delaying defiScannerTask for 3 minutes in day mode");
-                            Thread.sleep(3 * 60 * 1000);
+                            System.out.println("Delaying defiScannerTask for 1 minutes in day mode");
+                            Thread.sleep(1 * 60 * 1000);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
