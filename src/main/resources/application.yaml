@@ -1,0 +1,4 @@
+logging:
+level:
+  org.telegram: WARN
+  org.apache.http: WARN

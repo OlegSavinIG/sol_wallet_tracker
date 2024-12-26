@@ -3,14 +3,16 @@ package test.sol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.client.signature.SignatureClient;
+import test.sol.defiwebsocket.queueprocessor.NotActivatedWalletsQueue;
 import test.sol.pojo.signature.SignaturesResponse;
 import test.sol.redis.ConfirmedWalletsRedis;
+import test.sol.redis.NotActivatedWalletsRedis;
 import test.sol.redis.SignatureRedis;
 import test.sol.redis.ValidatedWalletsRedis;
 import test.sol.service.signature.SignatureService;
 import test.sol.service.signature.SignatureServiceImpl;
 import test.sol.service.wallet.WalletService;
-import test.sol.telegram.TelegramMessageSandler;
+import test.sol.telegram.TelegramMessageHandler;
 import test.sol.utils.ClientFactory;
 
 import java.io.IOException;
@@ -33,32 +35,57 @@ public class SolanaDefiScanner {
     public static void main(String[] args) throws IOException, InterruptedException {
         long startTime = System.nanoTime();
         logger.info("SolanaDefiScanner работает");
-        List<String> wallets = ValidatedWalletsRedis.loadValidatedAccounts();
-        logger.info("Loaded wallets from Redis {}", wallets.size());
 
-        Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
+        try {
+            List<String> wallets = ValidatedWalletsRedis.loadValidatedAccounts();
+            if (wallets.isEmpty()) {
+                logger.warn("No wallets loaded from Redis. Exiting...");
+                return;
+            }
+            ValidatedWalletsRedis.removeValidatedWallets(wallets);
+            logger.info("Loaded wallets from Redis: {}", wallets.size());
 
-        Map<String, Set<String>> validatedSignatures = signaturesForWallets.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> signatureService.validateSignature(entry.getValue())
-                ));
+            Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
 
-        List<String> confirmedWallets = walletService.getWalletsWithDefiUrl(validatedSignatures, DEFI_URLS);
-        logger.info("Confirmed wallets {}", confirmedWallets.size());
+            Map<String, Set<String>> validatedSignatures = signaturesForWallets.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> signatureService.validateSignature(entry.getValue())
+                    ));
 
-        long endTime = System.nanoTime();
-        System.out.println("DefiScanner working time - " + (endTime - startTime) / 1_000_000 + " ms");
+            List<String> confirmedWallets = walletService.getWalletsWithDefiUrl(validatedSignatures, DEFI_URLS);
+            logger.info("Confirmed wallets: {}", confirmedWallets.size());
 
-        if (!confirmedWallets.isEmpty()) {
-            String message = "Wallets found "
-                    + confirmedWallets.size()
-                    + " : - \n" + String.join(" - \n", confirmedWallets);
-            TelegramMessageSandler.sendToTelegram(message);
-            confirmedWallets.forEach(wallet -> logger.info("Confirmed wallet: {}", wallet));
-            ValidatedWalletsRedis.removeValidatedWallets(confirmedWallets);
-            ConfirmedWalletsRedis.saveConfirmedWallets(confirmedWallets);
-            SignatureRedis.removeWalletSignatures(confirmedWallets);
+            if (!confirmedWallets.isEmpty()) {
+                wallets.removeAll(confirmedWallets);
+            }
+            if (!wallets.isEmpty()) {
+                System.out.printf("Not activated wallets saved {}", wallets.size());
+                NotActivatedWalletsRedis.saveWithTTL(wallets);
+            }
+            NotActivatedWalletsQueue.addWallets(wallets);
+
+            if (!confirmedWallets.isEmpty()) {
+                String message = "Wallets found "
+                        + confirmedWallets.size()
+                        + " : - \n" + String.join(" - \n", confirmedWallets);
+                TelegramMessageHandler.sendToTelegram(message);
+                confirmedWallets.forEach(wallet -> logger.info("Confirmed wallet: {}", wallet));
+//                ValidatedWalletsRedis.removeValidatedWallets(confirmedWallets);
+                ConfirmedWalletsRedis.saveConfirmedWallets(confirmedWallets);
+                SignatureRedis.removeWalletSignatures(confirmedWallets);
+            }
+        } catch (IOException e) {
+            logger.error("IOException occurred in SolanaDefiScanner: {}", e.getMessage(), e);
+        } catch (InterruptedException e) {
+            logger.error("InterruptedException occurred in SolanaDefiScanner: {}", e.getMessage(), e);
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            logger.error("An unexpected error occurred in SolanaDefiScanner: {}", e.getMessage(), e);
+        } finally {
+            long endTime = System.nanoTime();
+            logger.info("DefiScanner working time: {} ms", (endTime - startTime) / 1_000_000);
         }
     }
 }
+

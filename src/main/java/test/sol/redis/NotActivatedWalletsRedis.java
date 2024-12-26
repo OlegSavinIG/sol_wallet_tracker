@@ -5,15 +5,14 @@ import redis.clients.jedis.Jedis;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ValidatedWalletsRedis {
+public class NotActivatedWalletsRedis {
+    private static final String REDIS_KEY = "not_activated_wallets";
     private static final String REDIS_HOST = "127.0.0.1";
     private static final int REDIS_PORT = 6379;
-    private static final String VALIDATED_WALLETS_KEY = "validated_wallets";
-
-    public static void saveValidatedWalletsWithTTL(List<String> newAccounts) {
+    public static void saveWithTTL(List<String> newAccounts) {
         try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
             for (String account : newAccounts) {
-                String accountKey = VALIDATED_WALLETS_KEY + ":" + account;
+                String accountKey = REDIS_KEY + ":" + account;
                 jedis.setex(accountKey, 57600, account); // 86400 секунд = 24 часа
             }
         } catch (Exception e) {
@@ -21,10 +20,10 @@ public class ValidatedWalletsRedis {
         }
     }
 
-    public static List<String> loadValidatedAccounts() {
+    public static List<String> load() {
         List<String> accounts = new ArrayList<>();
         try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
-            for (String key : jedis.keys(VALIDATED_WALLETS_KEY + ":*")) {
+            for (String key : jedis.keys(REDIS_KEY + ":*")) {
                 accounts.add(jedis.get(key));
             }
         } catch (Exception e) {
@@ -33,10 +32,10 @@ public class ValidatedWalletsRedis {
         return accounts;
     }
 
-    public static void removeValidatedWallets(List<String> wallets) {
+    public static void remove(List<String> wallets) {
         try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
             for (String wallet : wallets) {
-                String walletKey = VALIDATED_WALLETS_KEY + ":" + wallet;
+                String walletKey = REDIS_KEY + ":" + wallet;
                 jedis.del(walletKey);
             }
         } catch (Exception e) {

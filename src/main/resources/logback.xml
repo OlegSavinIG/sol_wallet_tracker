@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Консольный аппендер -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Настройка уровней логирования -->
+    <logger name="org.apache.http" level="WARN" />
+    <logger name="org.apache.http.wire" level="WARN" />
+    <logger name="org.apache.http.headers" level="WARN" />
+
+    <!-- Глобальный уровень логирования -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

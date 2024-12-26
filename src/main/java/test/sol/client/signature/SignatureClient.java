@@ -36,10 +36,10 @@ public class SignatureClient {
         return response;
     }
 
-    public SignaturesResponse getSignaturesForOneWallet(String wallet) throws IOException {
+    public SignaturesResponse getSignaturesForOneWallet(String wallet, int limit) throws IOException {
         String requestBody = requestBuilder.buildJsonRpcRequest(
                 "getSignaturesForAddress",
-                wallet, Map.of("limit", 85));
+                wallet, Map.of("limit", limit));
         return requestSender.processRequestWithRetry(requestBody, RPC_URL, new TypeReference<SignaturesResponse>() {
         });
     }
