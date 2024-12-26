@@ -18,9 +18,9 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.util.Set;
 
-public class SolanaAccountNotifier {
+public class SolanaWalletTracker {
 
-    private static final Logger logger = LoggerFactory.getLogger(SolanaAccountNotifier.class);
+    private static final Logger logger = LoggerFactory.getLogger(SolanaWalletTracker.class);
     public static final String WSS_PROVIDER_URL = "wss://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
 
     public static void main(String[] args) throws TelegramApiException {

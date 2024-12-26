@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Result {
-    Context context;
-    Value value;
+   private Context context;
+   private Value value;
 
     public Context getContext() {
         return context;

@@ -2,6 +2,8 @@ package test.sol.defiwebsocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import test.sol.defiwebsocket.queueprocessor.NotActivatedWalletsProcessor;
+import test.sol.defiwebsocket.queueprocessor.UnsubscribeWalletProcessor;
 import test.sol.redis.NotActivatedWalletsRedis;
 
 import java.net.URI;

@@ -1,4 +1,6 @@
-package test.sol.defiwebsocket;
+package test.sol.defiwebsocket.queueprocessor;
+
+import test.sol.defiwebsocket.WalletsSubscriptionService;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

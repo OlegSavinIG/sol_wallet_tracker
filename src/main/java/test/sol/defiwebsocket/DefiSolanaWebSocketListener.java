@@ -4,10 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import test.sol.SolanaWalletTracker;
 import test.sol.pojo.notification.RpcResponse;
 import test.sol.wallettracker.SolanaWebSocketListener;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
@@ -82,7 +82,7 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
 
             HttpClient client = HttpClient.newHttpClient();
             client.newWebSocketBuilder()
-                    .buildAsync(URI.create(test.sol.SolanaAccountNotifier.WSS_PROVIDER_URL), new SolanaWebSocketListener());
+                    .buildAsync(URI.create(SolanaWalletTracker.WSS_PROVIDER_URL), new SolanaWebSocketListener());
         } else {
             logger.error("❌ Maximum reconnect attempts reached. Unable to reconnect.");
         }

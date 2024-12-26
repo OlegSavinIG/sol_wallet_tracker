@@ -109,10 +109,13 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
             inlineKeyboard.sendInlineKeyboard(chatId);
         } else if (messageText.startsWith("/add_wallet")) {
             walletHandlerService.handleAddWallet(messageText, chatId);
+            inlineKeyboard.sendInlineKeyboard(chatId);
         } else if (messageText.startsWith("/list_wallets")) {
             walletHandlerService.handleListWallets(chatId);
+            inlineKeyboard.sendInlineKeyboard(chatId);
         } else if (messageText.startsWith("/remove_wallet")) {
             walletHandlerService.handleRemoveWallet(messageText, chatId);
+            inlineKeyboard.sendInlineKeyboard(chatId);
         } else {
             sendMessage(
                     chatId,
@@ -121,6 +124,7 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
                             " - Add a new wallet\n/list_wallets" +
                             " - List all wallets\n/remove_wallet <wallet_address>" +
                             " - Remove a wallet");
+            inlineKeyboard.sendInlineKeyboard(chatId);
         }
     }
 

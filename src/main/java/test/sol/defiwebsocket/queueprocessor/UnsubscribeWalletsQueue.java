@@ -1,4 +1,4 @@
-package test.sol.defiwebsocket;
+package test.sol.defiwebsocket.queueprocessor;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;

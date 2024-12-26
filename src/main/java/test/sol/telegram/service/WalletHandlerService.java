@@ -67,7 +67,6 @@ public class WalletHandlerService {
             if (walletAddresses.remove(walletAddress)) {
                 userWalletMapping.remove(walletAddress);
                 RemoveWalletQueue.addWallet(walletAddress);
-                bot.sendMessage(chatId, "✅ Wallet removal queued: " + walletAddress);
                 bot.sendMessage(chatId, "✅ Wallet removed successfully: " + walletAddress);
             } else {
                 bot.sendMessage(chatId, "⚠️ Wallet not found: " + walletAddress);

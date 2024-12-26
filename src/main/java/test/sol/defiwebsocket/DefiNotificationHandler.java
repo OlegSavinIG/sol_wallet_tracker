@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.client.signature.SignatureClient;
 import test.sol.client.transaction.TransactionClient;
+import test.sol.defiwebsocket.queueprocessor.UnsubscribeWalletsQueue;
 import test.sol.pojo.signature.SignatureResponseResult;
 import test.sol.pojo.signature.SignaturesResponse;
 import test.sol.pojo.transaction.TransactionResponse;
@@ -24,7 +25,7 @@ public class DefiNotificationHandler {
     private final SignatureClient signatureClient = ClientFactory.createSignatureClient();
     private final TransactionClient transactionClient = ClientFactory.createTransactionClient();
     private final ConcurrentHashMap<String, Long> lastProcessedTime = new ConcurrentHashMap<>();
-    private static final long MIN_PROCESS_INTERVAL_MS = 5000; // Минимальный интервал обработки (5 секунд)
+    private static final long MIN_PROCESS_INTERVAL_MS = 4000; // Минимальный интервал обработки (5 секунд)
 
     private static final List<String> DEFI_URLS = List.of(
 //            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
@@ -41,12 +42,18 @@ public class DefiNotificationHandler {
         }
 
         long currentTime = System.currentTimeMillis();
-        Long lastTime = lastProcessedTime.get(wallet);
+        Long lastTime = lastProcessedTime.compute(wallet, (key, value) -> {
+            if (value == null || (currentTime - value) >= MIN_PROCESS_INTERVAL_MS) {
+                return currentTime; // Обновляем время обработки
+            } else {
+                return value; // Оставляем старое значение
+            }
+        });
 
-        // Проверяем, прошло ли достаточно времени с последней обработки
-        if (lastTime != null && (currentTime - lastTime) < MIN_PROCESS_INTERVAL_MS) {
-            logger.info("Skipping notification for wallet: {} due to throttling", wallet);
-            return;
+        if (lastTime != currentTime) {
+            logger.info("Skipping notification for wallet: {} due to throttling. Last processed {} ms ago.",
+                    wallet, currentTime - lastTime);
+            return; // Пропускаем, если время обработки не обновилось
         }
 
         // Обновляем время последней обработки
@@ -55,8 +62,9 @@ public class DefiNotificationHandler {
         try {
             logger.info("Start processing wallet: {}", wallet);
             processWallet(wallet);
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("Error processing wallet: {}", e.getMessage(), e);
+            // Возможно, добавить кошелек в очередь на повторную обработку
         }
     }
 
@@ -77,18 +85,20 @@ public class DefiNotificationHandler {
             logger.info("Validating transactions for wallet {} ", wallet);
             TransactionResponse transaction = transactionClient.getSingleTransaction(signature);
             String logMessage = transaction.result().meta().logMessages().toString();
-            for (String defiUrl : DEFI_URLS) {
-                if (logMessage.contains(defiUrl)) {
-                    TelegramMessageHandler.sendToTelegram("Wallet activated: " + wallet);
-                    UnsubscribeWalletsQueue.addWallet(wallet);
-                    NotActivatedWalletsRedis.remove(List.of(wallet));
-                    break outer;
-                }
+
+            if (containsDefiUrl(logMessage)) {
+                TelegramMessageHandler.sendToTelegram("Wallet activated: " + wallet);
+                UnsubscribeWalletsQueue.addWallet(wallet);
+                NotActivatedWalletsRedis.remove(List.of(wallet));
+                break;
             }
         }
     }
 
     public void handleSubscribeNotification(int result, int id) {
         SubscriptionWalletStorage.addSubscriptionWithId(result, id);
+    }
+    private boolean containsDefiUrl(String logMessage) {
+        return DEFI_URLS.stream().anyMatch(logMessage::contains);
     }
 }

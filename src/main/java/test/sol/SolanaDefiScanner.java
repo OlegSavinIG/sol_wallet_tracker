@@ -3,7 +3,7 @@ package test.sol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.client.signature.SignatureClient;
-import test.sol.defiwebsocket.NotActivatedWalletsQueue;
+import test.sol.defiwebsocket.queueprocessor.NotActivatedWalletsQueue;
 import test.sol.pojo.signature.SignaturesResponse;
 import test.sol.redis.ConfirmedWalletsRedis;
 import test.sol.redis.NotActivatedWalletsRedis;
