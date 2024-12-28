@@ -11,93 +11,67 @@ import java.util.concurrent.TimeUnit;
 
 public class SolanaScannerScheduler {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+
     public static void main(String[] args) {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
         // Запуск WebSocket валидатора перед всеми задачами
         Runnable initializeWebSocketValidator = () -> {
             try {
-                System.out.println("🔧 Initializing SolanaDefiWebSocketValidator at: " + LocalTime.now().format(TIME_FORMATTER));
+                System.out.println("\uD83D\uDD27 Initializing SolanaDefiWebSocketValidator at: " + LocalTime.now().format(TIME_FORMATTER));
                 SolanaDefiWebSocketValidator.main(args);
-                System.out.println("✅ SolanaDefiWebSocketValidator initialized successfully.");
+                System.out.println("\u2705 SolanaDefiWebSocketValidator initialized successfully.");
             } catch (Exception e) {
                 System.err.println("Error while initializing SolanaDefiWebSocketValidator: " + e.getMessage());
                 e.printStackTrace();
             }
         };
 
+        // Запуск WebSocket валидатора
+        initializeWebSocketValidator.run();
+
         // Задача для мониторинга создания аккаунтов
         Runnable accountCreationTask = () -> {
             try {
                 System.out.println("Starting accountCreationTask at: " + LocalTime.now().format(TIME_FORMATTER));
-                Thread.sleep(30 * 1000);
-                SolanaAccountCreationScanner.main(null);
+                SolanaNewWalletScanner.main(null);
                 System.out.println("Finished accountCreationTask at: " + LocalTime.now().format(TIME_FORMATTER));
             } catch (Exception e) {
-                System.err.println("Error while executing SolanaAccountCreationScanner: " + e.getMessage());
+                System.err.println("Error while executing SolanaNewWalletScanner: " + e.getMessage());
                 e.printStackTrace();
             }
         };
 
         // Задача для мониторинга DeFi
-        Runnable defiScannerTask = new Runnable() {
-            private LocalDateTime lastExecutionTime = null;
-
-            @Override
-            public void run() {
-                try {
-                    System.out.println("Starting defiScannerTask at: " + LocalTime.now().format(TIME_FORMATTER));
-                    if (isNightPeriod()) {
-                        if (lastExecutionTime == null || lastExecutionTime.isBefore(LocalDateTime.now().minusHours(1))) {
-                            System.out.println("Running defiScannerTask in night mode");
-                            SolanaDefiScanner.main(null);
-                            lastExecutionTime = LocalDateTime.now();
-                        } else {
-                            System.out.println("defiScannerTask skipped: executed less than an hour ago (night mode).");
-                        }
-                    } else {
-                        try {
-                            System.out.println("Delaying defiScannerTask for 1 minutes in day mode");
-                            Thread.sleep(1 * 60 * 1000);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                        System.out.println("Running defiScannerTask in day mode");
-                        SolanaDefiScanner.main(null);
-                    }
-                    System.out.println("Finished defiScannerTask at: " + LocalTime.now().format(TIME_FORMATTER));
-                } catch (Exception e) {
-                    System.err.println("Error while executing SolanaDefiScanner: " + e.getMessage());
-                    e.printStackTrace();
-                }
+        Runnable defiScannerTask = () -> {
+            try {
+                System.out.println("Starting defiScannerTask at: " + LocalTime.now().format(TIME_FORMATTER));
+                SolanaDefiScanner.main(null);
+                System.out.println("Finished defiScannerTask at: " + LocalTime.now().format(TIME_FORMATTER));
+            } catch (Exception e) {
+                System.err.println("Error while executing SolanaDefiScanner: " + e.getMessage());
+                e.printStackTrace();
             }
         };
 
-        // Запуск WebSocket валидатора
-        initializeWebSocketValidator.run();
-
-        // Планирование задач
-        scheduler.scheduleWithFixedDelay(accountCreationTask, 0, 4, TimeUnit.MINUTES);
-
-        scheduler.scheduleWithFixedDelay(() -> {
+        // Комбинированный цикл задач
+        Runnable combinedTask = () -> {
             try {
+                accountCreationTask.run();
+                TimeUnit.SECONDS.sleep(35); // Пауза в 1 минуту перед запуском defiScannerTask
                 defiScannerTask.run();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Task interrupted: " + e.getMessage());
             } catch (Exception e) {
-                System.err.println("Error in scheduler: " + e.getMessage());
+                System.err.println("Error in combinedTask: " + e.getMessage());
                 e.printStackTrace();
             }
-        }, 0, 1, TimeUnit.MINUTES);
+        };
+
+        // Планирование комбинированного цикла задач
+        scheduler.scheduleWithFixedDelay(combinedTask, 0, 3, TimeUnit.MINUTES);
 
         System.out.println("Scheduler started. Tasks are running on schedule at: " + LocalDateTime.now().format(TIME_FORMATTER));
     }
-
-    private static boolean isNightPeriod() {
-        LocalTime now = LocalTime.now();
-        LocalTime startNight = LocalTime.of(3, 0);
-        LocalTime endNight = LocalTime.of(9, 0);
-        boolean isNight = !now.isBefore(startNight) && !now.isAfter(endNight);
-        System.out.println("isNightPeriod: " + isNight + " at: " + now);
-        return isNight;
-    }
 }
-

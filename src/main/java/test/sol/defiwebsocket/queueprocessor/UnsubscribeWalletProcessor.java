@@ -26,7 +26,7 @@ public class UnsubscribeWalletProcessor {
                     }
                 } else {
                     try {
-                        Thread.sleep(100); // Ждем новые кошельки
+                        Thread.sleep(500); // Ждем новые кошельки
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }

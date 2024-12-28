@@ -91,11 +91,13 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
             switch (currentState) {
                 case "awaiting_wallet_add":
                     walletHandlerService.handleAddWallet("/add_wallet " + messageText, chatId);
-                    userStateHandler.clearUserState(chatId); // Удаляем состояние
+                    userStateHandler.clearUserState(chatId);
+                    inlineKeyboard.sendInlineKeyboard(chatId);// Удаляем состояние
                     break;
                 case "awaiting_wallet_remove":
                     walletHandlerService.handleRemoveWallet("/remove_wallet " + messageText, chatId);
-                    userStateHandler.clearUserState(chatId); // Удаляем состояние
+                    userStateHandler.clearUserState(chatId);
+                    inlineKeyboard.sendInlineKeyboard(chatId);// Удаляем состояние
                     break;
                 default:
                     sendMessage(chatId, "⚠️ Неизвестное состояние. Используйте /start, чтобы начать.");

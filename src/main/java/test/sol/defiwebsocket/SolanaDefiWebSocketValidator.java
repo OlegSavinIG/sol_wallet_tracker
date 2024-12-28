@@ -13,9 +13,9 @@ import java.util.List;
 
 public class SolanaDefiWebSocketValidator {
     private static final Logger logger = LoggerFactory.getLogger(SolanaDefiWebSocketValidator.class);
-    public static final String WSS_PROVIDER_URL = "wss://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
+    public static final String WSS_PROVIDER_URL = "wss://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         logger.info("🔔 Starting SolanaDefiWebSocketValidator...");
 
         List<String> wallets = NotActivatedWalletsRedis.load();

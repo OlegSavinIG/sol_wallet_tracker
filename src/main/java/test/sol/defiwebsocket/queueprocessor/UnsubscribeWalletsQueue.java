@@ -8,7 +8,7 @@ public class UnsubscribeWalletsQueue {
 
     public static void addWallet(String walletAddress) {
         queue.add(walletAddress);
-        System.out.println("Wallet added to queue " + walletAddress);
+        System.out.println("Wallet added to unsubscribe queue " + walletAddress);
     }
 
     public static String pollWallet() {
