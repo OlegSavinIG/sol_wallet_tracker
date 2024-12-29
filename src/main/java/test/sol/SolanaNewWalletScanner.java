@@ -42,10 +42,8 @@ public class SolanaNewWalletScanner {
             logger.info("Validated sigantures - {}", signatures.size());
 
             List<TransactionResponse> transactions = transactionClient.getTransactions(signatures);
-            logger.info("Transactions before validation - {}", transactions.size());
-
             List<TransactionResult> transactionsWithTransfer = transactionService.getTransactionsWithTransfer(transactions);
-            logger.info("Transactions after validations - {}", transactionsWithTransfer.size());
+            logger.info("Transactions after validation with transfer - {}", transactionsWithTransfer.size());
 
             Set<String> wallets = transactionService.extractWalletsFromTransactions(transactionsWithTransfer);
             logger.info("Extracted wallets - {}", wallets.size());

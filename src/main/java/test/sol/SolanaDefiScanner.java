@@ -53,6 +53,9 @@ public class SolanaDefiScanner {
                             Map.Entry::getKey,
                             entry -> signatureService.validateSignature(entry.getValue())
                     ));
+            logger.info("Total signatures for all wallets {}", validatedSignatures.values().stream()
+                    .mapToInt(Set::size)
+                    .sum());
 
             List<String> confirmedWallets = walletService.getWalletsWithDefiUrl(validatedSignatures, DEFI_URLS);
             logger.info("Confirmed wallets: {}", confirmedWallets.size());
@@ -61,7 +64,6 @@ public class SolanaDefiScanner {
                 wallets.removeAll(confirmedWallets);
             }
             if (!wallets.isEmpty()) {
-                System.out.println("Not activated wallets saved {} "+ wallets.size());
                 NotActivatedWalletsRedis.saveWithTTL(wallets);
             }
             Thread.sleep(700);
@@ -73,7 +75,6 @@ public class SolanaDefiScanner {
                         + " : - \n" + String.join(" - \n", confirmedWallets);
                 TelegramMessageHandler.sendToTelegram(message);
                 confirmedWallets.forEach(wallet -> logger.info("Confirmed wallet: {}", wallet));
-//                ValidatedWalletsRedis.removeValidatedWallets(confirmedWallets);
                 ConfirmedWalletsRedis.saveConfirmedWallets(confirmedWallets);
                 SignatureRedis.removeWalletSignatures(confirmedWallets);
             }
