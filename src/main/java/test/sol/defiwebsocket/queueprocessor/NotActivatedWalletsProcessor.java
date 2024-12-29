@@ -22,11 +22,15 @@ public class NotActivatedWalletsProcessor {
                     System.out.println("PROCESSOR: Found new wallet " + wallet);
                     if (wallet != null) {
                         System.out.println("Wallet processor -> send to service ");
-                        subscriptionService.subscribeToWallet(wallet);
+                        try {
+                            subscriptionService.subscribeToWallet(wallet);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 } else {
                     try {
-                        Thread.sleep(100); // Ждем новые кошельки
+                        Thread.sleep(500); // Ждем новые кошельки
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }

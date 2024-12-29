@@ -20,9 +20,10 @@ public class WalletsSubscriptionService {
         this.webSocket = webSocket;
     }
 
-    public void subscribeToWallets(List<String> wallets) {
+    public void subscribeToWallets(List<String> wallets) throws InterruptedException {
         if (!wallets.isEmpty()) {
             for (String wallet : wallets) {
+                Thread.sleep(1000);
                 int id = WalletIdGenerator.getNextId();
                 subscriptionMap.put(id, wallet);
                 SubscriptionWalletStorage.addWalletWithId(id, wallet);
@@ -33,9 +34,10 @@ public class WalletsSubscriptionService {
         }
     }
 
-    public void subscribeToWallet(String wallet) {
+    public void subscribeToWallet(String wallet) throws InterruptedException {
         logger.info("Subscribe process activated with wallet {}", wallet);
         if (!SubscriptionWalletStorage.isContainsWallet(wallet)) {
+            Thread.sleep(1000);
             int id = WalletIdGenerator.getNextId();
             subscriptionMap.put(id, wallet);
             SubscriptionWalletStorage.addWalletWithId(id, wallet);

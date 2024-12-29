@@ -13,7 +13,7 @@ public class NotActivatedWalletsRedis {
         try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
             for (String account : newAccounts) {
                 String accountKey = REDIS_KEY + ":" + account;
-                jedis.setex(accountKey, 57600, account); // 86400 секунд = 24 часа
+                jedis.setex(accountKey, 27600, account); // 86400 секунд = 24 часа
             }
         } catch (Exception e) {
             System.err.println("Ошибка сохранения аккаунтов в Redis с TTL: " + e.getMessage());

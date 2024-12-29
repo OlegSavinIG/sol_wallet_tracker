@@ -5,18 +5,26 @@ import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.SolanaWalletTracker;
+import test.sol.defiwebsocket.queueprocessor.UnsubscribeWalletsQueue;
 import test.sol.pojo.notification.RpcResponse;
+import test.sol.redis.NotActivatedWalletsRedis;
 import test.sol.wallettracker.SolanaWebSocketListener;
+import test.sol.wallettracker.SubscriptionWalletStorage;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class DefiSolanaWebSocketListener implements WebSocket.Listener {
     private static final Logger logger = LoggerFactory.getLogger(SolanaWebSocketListener.class);
     private final DefiNotificationHandler notificationHandler = new DefiNotificationHandler();
+    private final Map<Integer, Integer> subscriptionCounter = new ConcurrentHashMap<>();
+    private static final int NOTIFICATION_THRESHOLD = 5;
     private static final Gson gson = new Gson();
     private static final int MAX_RECONNECT_ATTEMPTS = 5;
     private static final int RECONNECT_DELAY_MS = 2000;
@@ -41,8 +49,20 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
                 notificationHandler.handleSubscribeNotification(result, id);
             } else if (response.getParams() != null) {
                 int subscription = response.getParams().getSubscription();
-                logger.info("🔔 Notification received: subscription={}", subscription);
-                notificationHandler.handleNotification(subscription);
+                subscriptionCounter.merge(subscription, 1, Integer::sum);
+                int notificationCount = subscriptionCounter.get(subscription);
+                logger.info("\uD83D\uDD14 Notification received: subscription={}, count={}",
+                        subscription, notificationCount);
+
+                if (notificationCount > NOTIFICATION_THRESHOLD) {
+                    logger.warn("\u26A0\uFE0F Too many notifications for subscription={}, unsubscribing...", subscription);
+                    String wallet = SubscriptionWalletStorage.getWalletBySubscription(subscription);
+                    UnsubscribeWalletsQueue.addWallet(wallet);
+                    NotActivatedWalletsRedis.remove(List.of(wallet));
+                    subscriptionCounter.remove(subscription);
+                } else {
+                    notificationHandler.handleNotification(subscription);
+                }
             } else {
                 logger.warn("⚠️ Unexpected JSON structure: {}", data);
             }
@@ -71,21 +91,27 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
     private void reconnect() {
         if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             reconnectAttempts++;
-            logger.info("🔄 Attempting to reconnect... (Attempt {}/{})", reconnectAttempts, MAX_RECONNECT_ATTEMPTS);
+            long delay = (long) Math.pow(2, reconnectAttempts) * RECONNECT_DELAY_MS;
+            logger.info("🔄 Reconnecting... Attempt {}/{} in {} ms", reconnectAttempts, MAX_RECONNECT_ATTEMPTS, delay);
 
             try {
-                TimeUnit.MILLISECONDS.sleep(RECONNECT_DELAY_MS * reconnectAttempts);
+                TimeUnit.MILLISECONDS.sleep(delay);
             } catch (InterruptedException e) {
-                logger.error("❌ Reconnection interrupted: {}", e.getMessage());
+                logger.error("Reconnection interrupted: {}", e.getMessage());
                 Thread.currentThread().interrupt();
             }
 
-            HttpClient client = HttpClient.newHttpClient();
-            client.newWebSocketBuilder()
-                    .buildAsync(URI.create(SolanaWalletTracker.WSS_PROVIDER_URL), new SolanaWebSocketListener());
+            connectWebSocket(); // Повторное подключение
         } else {
-            logger.error("❌ Maximum reconnect attempts reached. Unable to reconnect.");
+            logger.error("❌ Maximum reconnect attempts reached.");
         }
     }
+
+    private void connectWebSocket() {
+        HttpClient client = HttpClient.newHttpClient();
+        client.newWebSocketBuilder()
+                .buildAsync(URI.create(SolanaWalletTracker.WSS_PROVIDER_URL), this);
+    }
+
 
 }

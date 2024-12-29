@@ -2,13 +2,11 @@ package test.sol.service.wallet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.SolanaAccountCreationScanner;
 import test.sol.client.signature.SignatureClient;
 import test.sol.client.transaction.TransactionClient;
 import test.sol.pojo.signature.SignatureResponseResult;
 import test.sol.pojo.signature.SignaturesResponse;
 import test.sol.pojo.transaction.TransactionResponse;
-import test.sol.pojo.transaction.TransactionResult;
 import test.sol.redis.SignatureRedis;
 import test.sol.utils.ClientFactory;
 
@@ -17,15 +15,15 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class WalletService {
-    private final TransactionClient transactionClient = ClientFactory.createTransactionClient();
-    private final SignatureClient signatureClient = ClientFactory.createSignatureClient();
+    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
+    private final TransactionClient transactionClient = ClientFactory.createTransactionClient(RPC_URL);
+    private final SignatureClient signatureClient = ClientFactory.createSignatureClient(RPC_URL);
     private final Logger logger = LoggerFactory.getLogger(WalletService.class);
 
     public List<String> validateWallets(List<String> wallets) throws IOException {
