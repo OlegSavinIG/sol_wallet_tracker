@@ -81,8 +81,8 @@ public class DefiNotificationHandler {
 
         Set<String> signatures = signatureService.validateSignature(signaturesResponse);
         if (result.isEmpty()){
-            logger.info("Result with signatures is empty!!!");
-            logger.info("Response {}", signaturesResponse);
+            logger.warn("Result with signatures is empty!!!");
+            logger.warn("Response {}", signaturesResponse);
         }
         Set<String> signaturesFromRedis = SignatureRedis.loadWalletSignatures(wallet);
         signatures.removeAll(signaturesFromRedis);
