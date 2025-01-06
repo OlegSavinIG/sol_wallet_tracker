@@ -70,7 +70,7 @@ public class SolanaScannerScheduler {
         };
 
         // Планирование комбинированного цикла задач
-        scheduler.scheduleWithFixedDelay(combinedTask, 0, 3, TimeUnit.MINUTES);
+        scheduler.scheduleWithFixedDelay(combinedTask, 0, 4, TimeUnit.MINUTES);
 
         System.out.println("Scheduler started. Tasks are running on schedule at: " + LocalDateTime.now().format(TIME_FORMATTER));
     }

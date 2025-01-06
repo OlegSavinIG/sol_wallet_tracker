@@ -75,21 +75,17 @@ public class DefiNotificationHandler {
     }
 
     private void processWallet(String wallet) throws IOException, InterruptedException {
+        Thread.sleep(500);
         SignaturesResponse signaturesResponse = signatureClient.getSignaturesForOneWallet(wallet, 10);
 
-        List<SignatureResponseResult> result = signaturesResponse.result();
-
         Set<String> signatures = signatureService.validateSignature(signaturesResponse);
-        if (result.isEmpty()){
-            logger.info("Result with signatures is empty!!!");
-            logger.info("Response {}", signaturesResponse);
-        }
         Set<String> signaturesFromRedis = SignatureRedis.loadWalletSignatures(wallet);
         signatures.removeAll(signaturesFromRedis);
         SignatureRedis.saveWalletSignatures(signatures, wallet);
-        logger.info("Signatures for validation size {}", signatures.size());
+        logger.info("Signatures before validation {}", signatures.size());
+
         for (String signature : signatures) {
-            Thread.sleep(800);
+            Thread.sleep(700);
             logger.info("Validating transactions for wallet {} with signature {}", wallet, signature);
             TransactionResponse transaction = transactionClient.getSingleTransaction(signature);
             String logMessage = transaction.result().meta().logMessages().toString();

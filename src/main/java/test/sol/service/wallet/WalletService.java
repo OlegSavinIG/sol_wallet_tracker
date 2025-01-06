@@ -15,6 +15,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,31 +76,40 @@ public class WalletService {
         }
     }
 
-    public List<String> getWalletsWithDefiUrl(
+    public Map<String, Set<String>> getWalletsWithDefiUrl(
             Map<String, Set<String>> signaturesForWallets,
             List<String> defiUrls) throws IOException, InterruptedException {
-        long startTime = System.nanoTime();
-        List<String> confirmedWallets = new ArrayList<>();
+
+        Set<String> rayJupWallets = new HashSet<>();
+        Set<String> pumpWallets = new HashSet<>();
+        Map<String, Set<String>> confirmedWallets = new HashMap<>();
 
         for (Map.Entry<String, Set<String>> entry : signaturesForWallets.entrySet()) {
             Thread.sleep(500);
-
             Set<String> loadedSignatures = SignatureRedis.loadWalletSignatures(entry.getKey());
             if (loadedSignatures.size() == entry.getValue().size()) {
                 continue;
             }
-            SignatureRedis.saveWalletSignatures(entry.getValue(), entry.getKey());
             entry.getValue().removeAll(loadedSignatures);
+            SignatureRedis.saveWalletSignatures(entry.getValue(), entry.getKey());
 
             List<TransactionResponse> transactions = transactionClient.getTransactions(entry.getValue());
 
             boolean isConfirmed = false;
             for (TransactionResponse transaction : transactions) {
                 String logMessages = transaction.result().meta().logMessages().toString();
-
+                if (logMessages.contains("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P")) {
+                    pumpWallets.add(entry.getKey());
+                    logger.info("Pump wallet found {}", entry.getKey());
+                    isConfirmed = true;
+                }
+                if (isConfirmed) {
+                    break;
+                }
                 for (String defiUrl : defiUrls) {
                     if (logMessages.contains(defiUrl)) {
-                        confirmedWallets.add(entry.getKey());
+                        rayJupWallets.add(entry.getKey());
+                        logger.info("Ray wallet found {}", entry.getKey());
                         isConfirmed = true;
                         break;
                     }
@@ -108,11 +119,9 @@ public class WalletService {
                 }
             }
         }
-        long endTime = System.nanoTime();
-        System.out.println("getWalletsWithDefiUrl working time - " + (endTime - startTime) / 1_000_000 + " ms");
+        confirmedWallets.put("Pump", pumpWallets);
+        confirmedWallets.put("Ray", rayJupWallets);
         return confirmedWallets;
     }
-
-
 }
 

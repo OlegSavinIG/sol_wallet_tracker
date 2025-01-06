@@ -1,20 +1,27 @@
 package test.sol.service.transaction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import test.sol.pojo.transaction.TransactionResponse;
 import test.sol.pojo.transaction.TransactionResult;
 import test.sol.redis.ProcessedWalletsRedis;
+import test.sol.telegram.TelegramMessageHandler;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TransactionServiceImpl implements TransactionService {
+    private static final Logger logger = LoggerFactory.getLogger(TransactionServiceImpl.class);
+
     @Override
     public List<TransactionResult> getTransactionsWithTransfer(List<TransactionResponse> transactions) {
         return transactions.stream()
                 .map(TransactionResponse::result)
                 .filter(result -> result != null)
+                .filter(transactionResult -> transactionResult.meta().err() == null)
                 .filter(result -> result.transaction() != null)
                 .filter(result -> result.transaction()
                         .message()
@@ -24,7 +31,29 @@ public class TransactionServiceImpl implements TransactionService {
                 )
                 .collect(Collectors.toList());
     }
-
+//    @Override
+//    public List<TransactionResult> getTransactionsWithTransfer(List<TransactionResponse> transactions) {
+//        List<TransactionResult> transactionsWithTransfer = transactions.stream()
+//                .map(TransactionResponse::result)
+//                .filter(Objects::nonNull)
+//                .filter(transactionResult -> transactionResult.meta().err() == null)
+//                .filter(result -> result.transaction() != null)
+//                .filter(result -> result.transaction()
+//                        .message()
+//                        .instructions().stream()
+//                        .filter(instruction -> instruction.parsed() != null)
+//                        .anyMatch(instruction -> "transfer".equals(instruction.parsed().type()))
+//                )
+//                .collect(Collectors.toList());
+//
+//        List<TransactionResult> transactionsWithDefi = defiUrlChecker(transactionsWithTransfer);
+//        if (!transactionsWithDefi.isEmpty()) {
+//            logger.info("Early wallets detected {}", transactionsWithDefi.size());
+//            transactionsWithTransfer.removeAll(transactionsWithDefi);
+//        }
+//
+//        return transactionsWithTransfer;
+//    }
 
     @Override
     public Set<String> extractWalletsFromTransactions(List<TransactionResult> transactions) {
@@ -46,5 +75,18 @@ public class TransactionServiceImpl implements TransactionService {
             }
         }
         return wallets;
+    }
+    private List<TransactionResult> defiUrlChecker(List<TransactionResult> transactionsWithTransfer) {
+        List<TransactionResult> transactionsWithDefi = transactionsWithTransfer.stream()
+                .filter(transactionResult -> transactionResult.meta() != null &&
+                        transactionResult.meta().logMessages() != null &&
+                        transactionResult.meta().logMessages().toString().contains("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"))
+                .toList();
+        if (!transactionsWithDefi.isEmpty()) {
+            transactionsWithTransfer.removeAll(transactionsWithDefi);
+            Set<String> wallets = extractWalletsFromTransactions(transactionsWithDefi);
+            TelegramMessageHandler.sendToTelegram("Wallets with defi pump " + String.join(" - ", wallets));
+        }
+        return transactionsWithDefi;
     }
 }
