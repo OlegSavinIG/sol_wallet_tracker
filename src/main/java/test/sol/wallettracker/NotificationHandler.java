@@ -11,16 +11,11 @@ public class NotificationHandler {
     public void handleNotification(Integer subscription) {
         String wallet = SubscriptionWalletStorage.getWalletBySubscription(subscription);
         logger.info("\uD83D\uDCB3 Wallet: {}", wallet);
-//        logger.info("\uD83D\uDCB0 Balance: {} lamports", value.getLamports());
-
-//        processValue(address, value);
         bot.notifyUserAboutEvent(wallet , "New event");
     }
 
     private void processValue(String address, Value value) {
-        // Placeholder for actual processing logic
         logger.info("Processing value for address: {} with balance: {} lamports", address, value.getLamports());
-        // Example: Save to database or trigger an external service
     }
 
     public void handleSubscribeNotification(int result, int id) {

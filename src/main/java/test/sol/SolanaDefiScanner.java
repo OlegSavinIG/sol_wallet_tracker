@@ -28,9 +28,9 @@ public class SolanaDefiScanner {
     private static final WalletService walletService = new WalletService();
     private static final Logger logger = LoggerFactory.getLogger(SolanaDefiScanner.class);
     private static final List<String> DEFI_URLS = List.of(
-//            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-//            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
+            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
+//            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
     );
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -57,11 +57,16 @@ public class SolanaDefiScanner {
                     .mapToInt(Set::size)
                     .sum());
 
-            List<String> confirmedWallets = walletService.getWalletsWithDefiUrl(validatedSignatures, DEFI_URLS);
-            logger.info("Confirmed wallets: {}", confirmedWallets.size());
+            Map<String, Set<String>> confirmedWallets = walletService.getWalletsWithDefiUrl(validatedSignatures, DEFI_URLS);
+            logger.info("Confirmed wallets Ray: {}", confirmedWallets.get("Ray").size());
 
-            if (!confirmedWallets.isEmpty()) {
-                wallets.removeAll(confirmedWallets);
+            if (!confirmedWallets.get("Ray").isEmpty()) {
+                wallets.removeAll(confirmedWallets.get("Ray"));
+                SignatureRedis.removeWalletSignatures(confirmedWallets.get("Ray").stream().toList());
+            }
+            if (!confirmedWallets.get("Pump").isEmpty()) {
+                wallets.removeAll(confirmedWallets.get("Pump"));
+                SignatureRedis.removeWalletSignatures(confirmedWallets.get("Pump").stream().toList());
             }
             if (!wallets.isEmpty()) {
                 NotActivatedWalletsRedis.saveWithTTL(wallets);
@@ -69,14 +74,19 @@ public class SolanaDefiScanner {
             Thread.sleep(700);
             NotActivatedWalletsQueue.addWallets(wallets);
 
-            if (!confirmedWallets.isEmpty()) {
-                String message = "Wallets found "
-                        + confirmedWallets.size()
-                        + " : - \n" + String.join(" - \n", confirmedWallets);
+            if (!confirmedWallets.get("Ray").isEmpty()) {
+                String message = "Ray or Jup wallets found "
+                        + confirmedWallets.get("Ray").size()
+                        + " : - \n" + String.join(" - \n", confirmedWallets.get("Ray"));
                 TelegramMessageHandler.sendToTelegram(message);
-                confirmedWallets.forEach(wallet -> logger.info("Confirmed wallet: {}", wallet));
-                ConfirmedWalletsRedis.saveConfirmedWallets(confirmedWallets);
-                SignatureRedis.removeWalletSignatures(confirmedWallets);
+
+                String pumpMessage = "Pump wallets found "
+                        + confirmedWallets.get("Pump").size()
+                        + " : - \n" + String.join(" - \n", confirmedWallets.get("Pump"));
+                TelegramMessageHandler.sendToTelegram(pumpMessage);
+
+//                confirmedWallets.forEach(wallet -> logger.info("Confirmed wallet: {}", wallet));
+//                ConfirmedWalletsRedis.saveConfirmedWallets(confirmedWallets);
             }
         } catch (IOException e) {
             logger.error("IOException occurred in SolanaDefiScanner: {}", e.getMessage(), e);
