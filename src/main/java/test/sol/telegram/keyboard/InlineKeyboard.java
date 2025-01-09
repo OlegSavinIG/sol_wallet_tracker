@@ -4,15 +4,15 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import test.sol.telegram.WalletTrackerBot;
+import test.sol.telegram.WalletWatcherTrackerBot;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class InlineKeyboard {
-    private final WalletTrackerBot bot;
+    private final WalletWatcherTrackerBot bot;
 
-    public InlineKeyboard(WalletTrackerBot bot) {
+    public InlineKeyboard(WalletWatcherTrackerBot bot) {
         this.bot = bot;
     }
 

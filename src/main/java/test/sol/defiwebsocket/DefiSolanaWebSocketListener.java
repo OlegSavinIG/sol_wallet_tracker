@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.SolanaWalletTracker;
+import test.sol.SolanaWalletWatcherTracker;
 import test.sol.defiwebsocket.queueprocessor.UnsubscribeWalletsQueue;
 import test.sol.pojo.notification.RpcResponse;
 import test.sol.redis.NotActivatedWalletsRedis;
@@ -110,7 +110,7 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
     private void connectWebSocket() {
         HttpClient client = HttpClient.newHttpClient();
         client.newWebSocketBuilder()
-                .buildAsync(URI.create(SolanaWalletTracker.WSS_PROVIDER_URL), this);
+                .buildAsync(URI.create(SolanaWalletWatcherTracker.WSS_PROVIDER_URL), this);
     }
 
 

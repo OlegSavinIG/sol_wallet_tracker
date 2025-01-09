@@ -2,7 +2,8 @@ package test.sol.telegram.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.telegram.WalletTrackerBot;
+import test.sol.redis.TrackWalletsRedis;
+import test.sol.telegram.WalletWatcherTrackerBot;
 import test.sol.wallettracker.queuelistener.RemoveWalletQueue;
 import test.sol.wallettracker.queuelistener.AddWalletQueue;
 
@@ -13,11 +14,11 @@ import java.util.regex.Pattern;
 public class WalletHandlerService {
     private final Set<String> walletAddresses;
     private final Map<String, String> userWalletMapping;
-    private final WalletTrackerBot bot;
+    private final WalletWatcherTrackerBot bot;
 
     private static final Logger logger = LoggerFactory.getLogger(WalletHandlerService.class);
 
-    public WalletHandlerService(Set<String> walletAddresses, Map<String, String> userWalletMapping, WalletTrackerBot bot) {
+    public WalletHandlerService(Set<String> walletAddresses, Map<String, String> userWalletMapping, WalletWatcherTrackerBot bot) {
         this.walletAddresses = walletAddresses;
         this.userWalletMapping = userWalletMapping;
         this.bot = bot;
@@ -35,6 +36,7 @@ public class WalletHandlerService {
             if (walletAddresses.add(walletAddress)) {
                 userWalletMapping.put(walletAddress, chatId);
                 notifyTrackingService(walletAddress);
+                TrackWalletsRedis.saveWalletChatID(walletAddress, chatId);
                 logger.info("New wallet added: {}", walletAddress);
                 bot.sendMessage(chatId, "✅ Wallet added successfully: " + walletAddress);
             } else {
@@ -66,6 +68,7 @@ public class WalletHandlerService {
         if (isValidWalletAddress(walletAddress)) {
             if (walletAddresses.remove(walletAddress)) {
                 userWalletMapping.remove(walletAddress);
+                TrackWalletsRedis.deleteWalletChatIDs(walletAddress);
                 RemoveWalletQueue.addWallet(walletAddress);
                 bot.sendMessage(chatId, "✅ Wallet removed successfully: " + walletAddress);
             } else {

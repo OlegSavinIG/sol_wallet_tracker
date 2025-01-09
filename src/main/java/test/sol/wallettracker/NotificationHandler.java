@@ -3,10 +3,10 @@ package test.sol.wallettracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.pojo.notification.Value;
-import test.sol.telegram.WalletTrackerBot;
+import test.sol.telegram.WalletWatcherTrackerBot;
 public class NotificationHandler {
     private static final Logger logger = LoggerFactory.getLogger(NotificationHandler.class);
-    private static final WalletTrackerBot bot = new WalletTrackerBot();
+    private static final WalletWatcherTrackerBot bot = new WalletWatcherTrackerBot();
 
     public void handleNotification(Integer subscription) {
         String wallet = SubscriptionWalletStorage.getWalletBySubscription(subscription);

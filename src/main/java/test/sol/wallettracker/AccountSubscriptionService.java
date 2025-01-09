@@ -5,23 +5,20 @@ import org.slf4j.LoggerFactory;
 import test.sol.utils.WalletIdGenerator;
 
 import java.net.http.WebSocket;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class AccountSubscriptionService {
     private static final Logger logger = LoggerFactory.getLogger(AccountSubscriptionService.class);
     private final WebSocket webSocket;
     private final Map<Integer, String> subscriptionMap = new ConcurrentHashMap<>();
-//    private final AtomicInteger walletId = new AtomicInteger(1);
 
     public AccountSubscriptionService(WebSocket webSocket) {
         this.webSocket = webSocket;
     }
 
-    public void subscribeToAddresses(Set<String> wallets) {
+    public void subscribeToWallets(Set<String> wallets) {
         for (String wallet : wallets) {
             int id = WalletIdGenerator.getNextId();
             subscriptionMap.put(id, wallet);

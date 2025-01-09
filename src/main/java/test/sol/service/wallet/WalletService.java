@@ -100,7 +100,6 @@ public class WalletService {
                 String logMessages = transaction.result().meta().logMessages().toString();
                 if (logMessages.contains("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P")) {
                     pumpWallets.add(entry.getKey());
-                    logger.info("Pump wallet found {}", entry.getKey());
                     isConfirmed = true;
                 }
                 if (isConfirmed) {
@@ -109,7 +108,6 @@ public class WalletService {
                 for (String defiUrl : defiUrls) {
                     if (logMessages.contains(defiUrl)) {
                         rayJupWallets.add(entry.getKey());
-                        logger.info("Ray wallet found {}", entry.getKey());
                         isConfirmed = true;
                         break;
                     }

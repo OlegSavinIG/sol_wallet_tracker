@@ -3,11 +3,10 @@ package test.sol.telegram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+import test.sol.redis.TrackWalletsRedis;
 import test.sol.telegram.keyboard.InlineKeyboard;
 import test.sol.telegram.service.UserStateHandler;
 import test.sol.telegram.service.WalletHandlerService;
@@ -17,19 +16,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class WalletTrackerBot extends TelegramLongPollingBot {
+public class WalletWatcherTrackerBot extends TelegramLongPollingBot {
 
     private static final String BOT_USERNAME = "Sol_Wallet_WatcherBot";
     private static final String BOT_TOKEN = "8144297666:AAHHYXwjQJ2Cu65Nnyb25OTFfIWly10F6gU";
     private static final Set<String> walletAddresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Map<String, String> userWalletMapping = new ConcurrentHashMap<>();
-    private static final Logger logger = LoggerFactory.getLogger(WalletTrackerBot.class);
+    private static final Logger logger = LoggerFactory.getLogger(WalletWatcherTrackerBot.class);
     private final InlineKeyboard inlineKeyboard;
     private final WalletHandlerService walletHandlerService;
     private final UserStateHandler userStateHandler = new UserStateHandler();
 
 
-    public WalletTrackerBot() {
+    public WalletWatcherTrackerBot() {
         inlineKeyboard = new InlineKeyboard(this);
         walletHandlerService = new WalletHandlerService(walletAddresses, userWalletMapping, this);
     }
@@ -143,10 +142,12 @@ public class WalletTrackerBot extends TelegramLongPollingBot {
     }
 
     public void notifyUserAboutEvent(String walletAddress, String eventDetails) {
-        String chatId = userWalletMapping.get(walletAddress);
-        logger.info("Sending response for chatId {}", chatId);
-        if (chatId != null) {
-            sendMessage(chatId, "🔔 Event detected for wallet " + walletAddress + ":\n" + eventDetails);
+        Set<String> walletChatIDs = TrackWalletsRedis.getWalletChatIDs(walletAddress);
+//        String chatId = userWalletMapping.get(walletAddress);
+        logger.info("Sending response for chatIds {}", walletChatIDs);
+        if (walletChatIDs != null) {
+            walletChatIDs.forEach(chatId -> sendMessage(chatId, "🔔 Event detected for wallet " + walletAddress + ":\n" + eventDetails));
+//            sendMessage(chatId, "🔔 Event detected for wallet " + walletAddress + ":\n" + eventDetails);
         }
     }
 }

@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.SolanaWalletTracker;
+import test.sol.SolanaWalletWatcherTracker;
 import test.sol.pojo.notification.RpcResponse;
 
 import java.net.URI;
@@ -81,7 +81,7 @@ public class SolanaWebSocketListener implements WebSocket.Listener {
 
             HttpClient client = HttpClient.newHttpClient();
             client.newWebSocketBuilder()
-                    .buildAsync(URI.create(SolanaWalletTracker.WSS_PROVIDER_URL), new SolanaWebSocketListener());
+                    .buildAsync(URI.create(SolanaWalletWatcherTracker.WSS_PROVIDER_URL), new SolanaWebSocketListener());
         } else {
             logger.error("❌ Maximum reconnect attempts reached. Unable to reconnect.");
         }
