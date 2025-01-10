@@ -2,7 +2,6 @@ package test.sol.defiwebsocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.wallettracker.SubscriptionWalletStorage;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -13,7 +12,7 @@ public class SubscriptionWebSocketStorage {
     private static final Map<Integer, String> idWalletMap = new ConcurrentHashMap<>();
     private static final Map<Integer, Integer> subscriptionIdMap = new ConcurrentHashMap<>();
     private static final Map<String, Integer> walletSubscriptionMap = new ConcurrentHashMap<>();
-    private static final Logger logger = LoggerFactory.getLogger(SubscriptionWalletStorage.class);
+    private static final Logger logger = LoggerFactory.getLogger(SubscriptionWebSocketStorage.class);
     public static Set<String> getAllWallets(){
         return new HashSet<>(walletSubscriptionMap.keySet());
     }

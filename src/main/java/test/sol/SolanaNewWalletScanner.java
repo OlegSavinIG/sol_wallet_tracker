@@ -55,7 +55,7 @@ public class SolanaNewWalletScanner {
             logger.info("Validated wallets {}", validatedWallets.size());
             ValidatedWalletsRedis.saveValidatedWalletsWithTTL(validatedWallets);
 
-            validatedWallets.forEach(System.out::println);
+//            validatedWallets.forEach(System.out::println);
             long endTime = System.nanoTime();
             System.out.println("SolanaNewWalletScanner working time " + (endTime - startTime) / 1_000_000 + " ms");
         } catch (Exception e) {
