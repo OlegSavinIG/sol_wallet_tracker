@@ -4,12 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.SolanaWalletTracker;
+import test.sol.SolanaWalletWatcherTracker;
 import test.sol.defiwebsocket.queueprocessor.UnsubscribeWalletsQueue;
 import test.sol.pojo.notification.RpcResponse;
 import test.sol.redis.NotActivatedWalletsRedis;
 import test.sol.wallettracker.SolanaWebSocketListener;
-import test.sol.wallettracker.SubscriptionWalletStorage;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -56,7 +55,7 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
 
                 if (notificationCount > NOTIFICATION_THRESHOLD) {
                     logger.warn("\u26A0\uFE0F Too many notifications for subscription={}, unsubscribing...", subscription);
-                    String wallet = SubscriptionWalletStorage.getWalletBySubscription(subscription);
+                    String wallet = SubscriptionWebSocketStorage.getWalletBySubscription(subscription);
                     UnsubscribeWalletsQueue.addWallet(wallet);
                     NotActivatedWalletsRedis.remove(List.of(wallet));
                     subscriptionCounter.remove(subscription);
@@ -110,7 +109,7 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
     private void connectWebSocket() {
         HttpClient client = HttpClient.newHttpClient();
         client.newWebSocketBuilder()
-                .buildAsync(URI.create(SolanaWalletTracker.WSS_PROVIDER_URL), this);
+                .buildAsync(URI.create(SolanaWalletWatcherTracker.WSS_PROVIDER_URL), this);
     }
 
 

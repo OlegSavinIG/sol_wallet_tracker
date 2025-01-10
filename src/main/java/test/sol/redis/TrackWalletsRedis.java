@@ -29,4 +29,22 @@ public class TrackWalletsRedis {
             System.out.println("✅ Redis wallet storage cleared.");
         }
     }
+
+    public static void saveWalletChatID(String walletAddress, String chatId) {
+        try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
+            jedis.sadd(REDIS_KEY + walletAddress, chatId);
+        }
+    }
+    public static Set<String> getWalletChatIDs(String walletAddress) {
+        try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
+            return jedis.smembers(REDIS_KEY + walletAddress);
+        }
+    }
+    public static void deleteWalletChatIDs(String walletAddress) {
+        try (Jedis jedis = new Jedis(REDIS_HOST, REDIS_PORT)) {
+            jedis.del(REDIS_KEY + walletAddress);
+        }
+    }
+
+
 }

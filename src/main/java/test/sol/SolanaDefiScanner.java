@@ -5,14 +5,13 @@ import org.slf4j.LoggerFactory;
 import test.sol.client.signature.SignatureClient;
 import test.sol.defiwebsocket.queueprocessor.NotActivatedWalletsQueue;
 import test.sol.pojo.signature.SignaturesResponse;
-import test.sol.redis.ConfirmedWalletsRedis;
 import test.sol.redis.NotActivatedWalletsRedis;
 import test.sol.redis.SignatureRedis;
 import test.sol.redis.ValidatedWalletsRedis;
 import test.sol.service.signature.SignatureService;
 import test.sol.service.signature.SignatureServiceImpl;
 import test.sol.service.wallet.WalletService;
-import test.sol.telegram.TelegramMessageHandler;
+import test.sol.telegram.TelegramInformationMessageHandler;
 import test.sol.utils.ClientFactory;
 
 import java.io.IOException;
@@ -58,7 +57,6 @@ public class SolanaDefiScanner {
                     .sum());
 
             Map<String, Set<String>> confirmedWallets = walletService.getWalletsWithDefiUrl(validatedSignatures, DEFI_URLS);
-            logger.info("Confirmed wallets Ray: {}", confirmedWallets.get("Ray").size());
 
             if (!confirmedWallets.get("Ray").isEmpty()) {
                 wallets.removeAll(confirmedWallets.get("Ray"));
@@ -78,15 +76,13 @@ public class SolanaDefiScanner {
                 String message = "Ray or Jup wallets found "
                         + confirmedWallets.get("Ray").size()
                         + " : - \n" + String.join(" - \n", confirmedWallets.get("Ray"));
-                TelegramMessageHandler.sendToTelegram(message);
-
+                TelegramInformationMessageHandler.sendToTelegram(message);
+            }
+            if (!confirmedWallets.get("Pump").isEmpty()) {
                 String pumpMessage = "Pump wallets found "
                         + confirmedWallets.get("Pump").size()
                         + " : - \n" + String.join(" - \n", confirmedWallets.get("Pump"));
-                TelegramMessageHandler.sendToTelegram(pumpMessage);
-
-//                confirmedWallets.forEach(wallet -> logger.info("Confirmed wallet: {}", wallet));
-//                ConfirmedWalletsRedis.saveConfirmedWallets(confirmedWallets);
+                TelegramInformationMessageHandler.sendToTelegram(pumpMessage);
             }
         } catch (IOException e) {
             logger.error("IOException occurred in SolanaDefiScanner: {}", e.getMessage(), e);

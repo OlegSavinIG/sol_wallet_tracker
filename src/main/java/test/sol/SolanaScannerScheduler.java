@@ -15,7 +15,6 @@ public class SolanaScannerScheduler {
     public static void main(String[] args) {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-        // Запуск WebSocket валидатора перед всеми задачами
         Runnable initializeWebSocketValidator = () -> {
             try {
                 System.out.println("\uD83D\uDD27 Initializing SolanaDefiWebSocketValidator at: " + LocalTime.now().format(TIME_FORMATTER));
@@ -27,10 +26,8 @@ public class SolanaScannerScheduler {
             }
         };
 
-        // Запуск WebSocket валидатора
         initializeWebSocketValidator.run();
 
-        // Задача для мониторинга создания аккаунтов
         Runnable accountCreationTask = () -> {
             try {
                 System.out.println("Starting accountCreationTask at: " + LocalTime.now().format(TIME_FORMATTER));
@@ -42,7 +39,6 @@ public class SolanaScannerScheduler {
             }
         };
 
-        // Задача для мониторинга DeFi
         Runnable defiScannerTask = () -> {
             try {
                 System.out.println("Starting defiScannerTask at: " + LocalTime.now().format(TIME_FORMATTER));
@@ -54,11 +50,10 @@ public class SolanaScannerScheduler {
             }
         };
 
-        // Комбинированный цикл задач
         Runnable combinedTask = () -> {
             try {
                 accountCreationTask.run();
-                TimeUnit.SECONDS.sleep(35); // Пауза в 1 минуту перед запуском defiScannerTask
+                TimeUnit.SECONDS.sleep(35);
                 defiScannerTask.run();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -69,7 +64,6 @@ public class SolanaScannerScheduler {
             }
         };
 
-        // Планирование комбинированного цикла задач
         scheduler.scheduleWithFixedDelay(combinedTask, 0, 4, TimeUnit.MINUTES);
 
         System.out.println("Scheduler started. Tasks are running on schedule at: " + LocalDateTime.now().format(TIME_FORMATTER));

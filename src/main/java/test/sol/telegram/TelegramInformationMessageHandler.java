@@ -6,7 +6,7 @@ import okhttp3.Response;
 
 import java.io.IOException;
 
-public class TelegramMessageHandler {
+public class TelegramInformationMessageHandler {
     public static void sendToTelegram(String message) {
         String botToken = "7585664520:AAGnoYU_M8IhHf9T7LGSKZYjSFraNVF5byY"; // Укажите токен бота
         String chatId = "408673453"; // Укажите ID вашего чата (можно получить с помощью метода /getUpdates)

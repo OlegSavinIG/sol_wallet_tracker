@@ -3,7 +3,6 @@ package test.sol.defiwebsocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import test.sol.utils.WalletIdGenerator;
-import test.sol.wallettracker.SubscriptionWalletStorage;
 
 import java.net.http.WebSocket;
 import java.util.List;
@@ -26,7 +25,7 @@ public class WalletsSubscriptionService {
                 Thread.sleep(1000);
                 int id = WalletIdGenerator.getNextId();
                 subscriptionMap.put(id, wallet);
-                SubscriptionWalletStorage.addWalletWithId(id, wallet);
+                SubscriptionWebSocketStorage.addWalletWithId(id, wallet);
                 String subscriptionMessage = createAccountSubscriptionMessage(wallet, id);
                 webSocket.sendText(subscriptionMessage, true);
                 logger.info("🔔 Subscribed to wallet: {} with subscription ID: {}", wallet, id);
@@ -36,11 +35,11 @@ public class WalletsSubscriptionService {
 
     public void subscribeToWallet(String wallet) throws InterruptedException {
         logger.info("Subscribe process activated with wallet {}", wallet);
-        if (!SubscriptionWalletStorage.isContainsWallet(wallet)) {
+        if (!SubscriptionWebSocketStorage.isContainsWallet(wallet)) {
             Thread.sleep(1000);
             int id = WalletIdGenerator.getNextId();
             subscriptionMap.put(id, wallet);
-            SubscriptionWalletStorage.addWalletWithId(id, wallet);
+            SubscriptionWebSocketStorage.addWalletWithId(id, wallet);
             String subscriptionMessage = createAccountSubscriptionMessage(wallet, id);
             webSocket.sendText(subscriptionMessage, true);
             logger.info("🔔 Subscribed to wallet: {} with subscription ID: {}", wallet, id);
@@ -50,10 +49,10 @@ public class WalletsSubscriptionService {
     }
 
     public void unsubscribeFromWallet(String wallet) {
-        if (SubscriptionWalletStorage.isContainsWallet(wallet)) {
-            int subscription = SubscriptionWalletStorage.getSubscriptionByWallet(wallet);
+        if (SubscriptionWebSocketStorage.isContainsWallet(wallet)) {
+            int subscription = SubscriptionWebSocketStorage.getSubscriptionByWallet(wallet);
             String unsubscribeMessage = createAccountUnsubscriptionMessage(subscription);
-            SubscriptionWalletStorage.removeAll(wallet);
+            SubscriptionWebSocketStorage.removeAll(wallet);
             webSocket.sendText(unsubscribeMessage, true);
             logger.info("❎ Unsubscribed from address: {} with subscription ID: {}", wallet, subscription);
         } else {

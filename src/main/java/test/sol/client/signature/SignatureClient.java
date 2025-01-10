@@ -1,7 +1,6 @@
 package test.sol.client.signature;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import test.sol.pojo.signature.SignatureResponseResult;
 import test.sol.pojo.signature.SignaturesResponse;
 import test.sol.utils.RequestBuilder;
 import test.sol.utils.RequestSender;
@@ -10,7 +9,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -18,6 +16,7 @@ public class SignatureClient {
     private final String RPC_URL;
     private final RequestSender requestSender;
     private final RequestBuilder requestBuilder;
+
     public SignatureClient(String RPC_URL, RequestSender requestSender, RequestBuilder requestBuilder) {
         this.RPC_URL = RPC_URL;
         this.requestSender = requestSender;
@@ -27,7 +26,8 @@ public class SignatureClient {
     public SignaturesResponse getSignaturesForSystemProgram() throws IOException {
         String requestBody = requestBuilder.buildJsonRpcRequest(
                 "getSignaturesForAddress",
-                "ComputeBudget111111111111111111111111111111",
+                "11111111111111111111111111111111",
+//                "ComputeBudget111111111111111111111111111111",
                 Map.of("limit", 1000));
 
         SignaturesResponse response = requestSender.processRequestWithRetry(
@@ -45,7 +45,7 @@ public class SignatureClient {
     }
 
     public Map<String, SignaturesResponse> getSignaturesForWallets(List<String> wallets) throws IOException {
-        long startTime = System.nanoTime();
+//        long startTime = System.nanoTime();
         Map<String, SignaturesResponse> result = new HashMap<>();
         int batchSize = 70;
 
@@ -59,7 +59,8 @@ public class SignatureClient {
                     sortedWallets, "getSignaturesForAddress", 85);
 
             List<SignaturesResponse> signaturesResponses = requestSender.processRequestWithRetry(
-                    batchRequest, RPC_URL, new TypeReference<List<SignaturesResponse>>() {});
+                    batchRequest, RPC_URL, new TypeReference<List<SignaturesResponse>>() {
+                    });
 
             for (SignaturesResponse response : signaturesResponses) {
                 if (!sortedWallets.containsKey(response.id())) {
@@ -68,8 +69,8 @@ public class SignatureClient {
                 result.put(sortedWallets.get(response.id()), response);
             }
         }
-        long endTime = System.nanoTime();
-        System.out.println("getSignaturesForWallets working time - " + (endTime - startTime) / 1_000_000 + " ms");
+//        long endTime = System.nanoTime();
+//        System.out.println("getSignaturesForWallets working time - " + (endTime - startTime) / 1_000_000 + " ms");
 
         return result;
     }

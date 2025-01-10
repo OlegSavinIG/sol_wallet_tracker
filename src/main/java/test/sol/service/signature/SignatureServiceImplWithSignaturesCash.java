@@ -2,7 +2,6 @@ package test.sol.service.signature;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import test.sol.SolanaWalletTracker;
 import test.sol.pojo.signature.SignatureResponseResult;
 import test.sol.pojo.signature.SignaturesResponse;
 

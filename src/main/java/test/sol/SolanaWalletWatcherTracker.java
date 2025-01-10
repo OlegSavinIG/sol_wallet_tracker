@@ -6,7 +6,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import test.sol.redis.TrackWalletsRedis;
-import test.sol.telegram.WalletTrackerBot;
+import test.sol.telegram.WalletWatcherTrackerBot;
 import test.sol.wallettracker.AccountSubscriptionService;
 import test.sol.wallettracker.SubscriptionWalletStorage;
 import test.sol.wallettracker.queuelistener.RemoveWalletProcessor;
@@ -18,9 +18,9 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.util.Set;
 
-public class SolanaWalletTracker {
+public class SolanaWalletWatcherTracker {
 
-    private static final Logger logger = LoggerFactory.getLogger(SolanaWalletTracker.class);
+    private static final Logger logger = LoggerFactory.getLogger(SolanaWalletWatcherTracker.class);
     public static final String WSS_PROVIDER_URL = "wss://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
 
     public static void main(String[] args) throws TelegramApiException {
@@ -34,7 +34,7 @@ public class SolanaWalletTracker {
                 .join();
 
         AccountSubscriptionService subscriptionService = new AccountSubscriptionService(webSocket);
-        subscriptionService.subscribeToAddresses(wallets);
+        subscriptionService.subscribeToWallets(wallets);
 
         AddWalletProcessor addWalletProcessor = new AddWalletProcessor(subscriptionService);
         RemoveWalletProcessor removeWalletProcessor = new RemoveWalletProcessor(subscriptionService);
@@ -42,7 +42,7 @@ public class SolanaWalletTracker {
         removeWalletProcessor.startProcessing();
         addWalletProcessor.startProcessing();
 
-        WalletTrackerBot bot = new WalletTrackerBot();
+        WalletWatcherTrackerBot bot = new WalletWatcherTrackerBot();
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(bot);
 
