@@ -29,14 +29,13 @@ public class WalletService {
     private final Logger logger = LoggerFactory.getLogger(WalletService.class);
 
     public List<String> validateWallets(List<String> wallets) throws IOException {
-        int batchSize = 20;
+        int batchSize = 40;
         List<String> validatedWallets = new ArrayList<>();
 
         for (int i = 0; i < wallets.size(); i += batchSize) {
             List<String> batchWallets = wallets.subList(i, Math.min(i + batchSize, wallets.size()));
             validatedWallets.addAll(validateBatch(batchWallets));
         }
-
         return validatedWallets;
     }
 

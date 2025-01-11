@@ -20,13 +20,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class DefiSolanaWebSocketListener implements WebSocket.Listener {
-    private static final Logger logger = LoggerFactory.getLogger(SolanaWebSocketListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefiSolanaWebSocketListener.class);
     private final DefiNotificationHandler notificationHandler = new DefiNotificationHandler();
     private final Map<Integer, Integer> subscriptionCounter = new ConcurrentHashMap<>();
     private static final int NOTIFICATION_THRESHOLD = 5;
     private static final Gson gson = new Gson();
     private static final int MAX_RECONNECT_ATTEMPTS = 5;
     private static final int RECONNECT_DELAY_MS = 2000;
+    private static final int MAX_RECONNECT_DELAY_MS = 30000;
     private int reconnectAttempts = 0;
 
     @Override
@@ -99,8 +100,7 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
                 logger.error("Reconnection interrupted: {}", e.getMessage());
                 Thread.currentThread().interrupt();
             }
-
-            connectWebSocket(); // Повторное подключение
+            connectWebSocket();
         } else {
             logger.error("❌ Maximum reconnect attempts reached.");
         }
@@ -111,6 +111,4 @@ public class DefiSolanaWebSocketListener implements WebSocket.Listener {
         client.newWebSocketBuilder()
                 .buildAsync(URI.create(SolanaWalletWatcherTracker.WSS_PROVIDER_URL), this);
     }
-
-
 }

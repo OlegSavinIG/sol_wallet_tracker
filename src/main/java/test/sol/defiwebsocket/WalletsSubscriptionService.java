@@ -22,7 +22,7 @@ public class WalletsSubscriptionService {
     public void subscribeToWallets(List<String> wallets) throws InterruptedException {
         if (!wallets.isEmpty()) {
             for (String wallet : wallets) {
-                Thread.sleep(1000);
+                Thread.sleep(200);
                 int id = WalletIdGenerator.getNextId();
                 subscriptionMap.put(id, wallet);
                 SubscriptionWebSocketStorage.addWalletWithId(id, wallet);
