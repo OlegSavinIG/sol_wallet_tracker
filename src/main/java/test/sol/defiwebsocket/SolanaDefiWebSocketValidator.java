@@ -19,14 +19,17 @@ public class SolanaDefiWebSocketValidator {
         logger.info("🔔 Starting SolanaDefiWebSocketValidator...");
 
         List<String> wallets = NotActivatedWalletsRedis.load();
+        WalletsSubscriptionService subscriptionService = new WalletsSubscriptionService();
+        WebSocketManager webSocketManager = new WebSocketManager(wallets, subscriptionService);
 
-        HttpClient client = HttpClient.newHttpClient();
-        WebSocket webSocket = client.newWebSocketBuilder()
-                .buildAsync(URI.create(WSS_PROVIDER_URL), new DefiSolanaWebSocketListener())
-                .join();
-
-        WalletsSubscriptionService subscriptionService = new WalletsSubscriptionService(webSocket);
-        subscriptionService.subscribeToWallets(wallets);
+//        HttpClient client = HttpClient.newHttpClient();
+//
+//        WebSocket webSocket = client.newWebSocketBuilder()
+//                .buildAsync(URI.create(WSS_PROVIDER_URL), new DefiWebSocketListener())
+//                .join();
+//
+//        WalletsSubscriptionService subscriptionService = new WalletsSubscriptionService(webSocket);
+//        subscriptionService.subscribeToWallets(wallets);
 
         NotActivatedWalletsProcessor walletsProcessor = new NotActivatedWalletsProcessor(subscriptionService);
         UnsubscribeWalletProcessor unsubscribeWalletProcessor = new UnsubscribeWalletProcessor(subscriptionService);
@@ -36,7 +39,9 @@ public class SolanaDefiWebSocketValidator {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             walletsProcessor.stopProcessing();
             unsubscribeWalletProcessor.stopProcessing();
+            webSocketManager.close();
             logger.info("✅ Application stopped.");
         }));
+        webSocketManager.connect();
     }
 }

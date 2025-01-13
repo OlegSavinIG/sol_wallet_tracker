@@ -19,13 +19,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class WalletService {
     private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
     private final TransactionClient transactionClient = ClientFactory.createTransactionClient(RPC_URL);
     private final SignatureClient signatureClient = ClientFactory.createSignatureClient(RPC_URL);
+    private static final int MIN_TRANSACTION_COUNT = 2;
+    private static final int MAX_TRANSACTION_COUNT = 55;
+    private static final int MAX_TRANSACTION_AGE_HOURS = 24;
     private final Logger logger = LoggerFactory.getLogger(WalletService.class);
 
     public List<String> validateWallets(List<String> wallets) throws IOException {
@@ -39,41 +44,104 @@ public class WalletService {
         return validatedWallets;
     }
 
-    private List<String> validateBatch(List<String> wallets) throws IOException {
-        Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
+//    private List<String> validateBatch(List<String> wallets) throws IOException {
+//        Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
+//
+//        return signaturesForWallets.entrySet().stream()
+//                .filter(entry -> isTransactionsCountBelow80(entry.getValue()))
+//                .filter(entry -> isTransactionTimeBefore24Hours(entry.getValue()))
+//                .map(Map.Entry::getKey)
+//                .collect(Collectors.toList());
+//    }
+//
+//    private boolean isTransactionsCountBelow80(SignaturesResponse signaturesResponse) {
+//        int transactionCount = signaturesResponse.result().size();
+//        return transactionCount > 1 && transactionCount < 55;
+//    }
+//
+//    private boolean isTransactionTimeBefore24Hours(SignaturesResponse signaturesResponse) {
+//        try {
+//            List<SignatureResponseResult> results = signaturesResponse.result();
+//            if (results.isEmpty()) {
+//                return false;
+//            }
+//
+//            SignatureResponseResult latestSignature = results.get(results.size() - 1);
+//            TransactionResponse transaction = transactionClient.getSingleTransaction(latestSignature.signature());
+//
+//            LocalDateTime transactionTime = LocalDateTime.ofEpochSecond(
+//                    transaction.result().blockTime(), 0, ZoneOffset.UTC);
+//            LocalDateTime currentTime = LocalDateTime.now(ZoneOffset.UTC);
+//
+//            return Duration.between(transactionTime, currentTime).toHours() <= 24;
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
 
-        return signaturesForWallets.entrySet().stream()
-                .filter(entry -> isTransactionsCountBelow80(entry.getValue()))
-                .filter(entry -> isTransactionTimeBefore24Hours(entry.getValue()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-    }
+        public List<String> validateBatch(List<String> wallets) throws IOException {
+            Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
 
-    private boolean isTransactionsCountBelow80(SignaturesResponse signaturesResponse) {
-        int transactionCount = signaturesResponse.result().size();
-        return transactionCount > 0 && transactionCount < 80;
-    }
+            List<CompletableFuture<String>> futures = signaturesForWallets.entrySet().stream()
+                    .map(entry -> CompletableFuture.supplyAsync(() -> {
+                        String wallet = entry.getKey();
+                        SignaturesResponse signaturesResponse = entry.getValue();
 
-    private boolean isTransactionTimeBefore24Hours(SignaturesResponse signaturesResponse) {
-        try {
-            List<SignatureResponseResult> results = signaturesResponse.result();
-            if (results.isEmpty()) {
+                        if (isTransactionCountValid(signaturesResponse) && isTransactionRecent(signaturesResponse)) {
+                            return wallet;
+                        }
+                        return null;
+                    }))
+                    .collect(Collectors.toList());
+
+            // Ждем завершения всех CompletableFuture и собираем результаты
+            return futures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
+        private boolean isTransactionCountValid(SignaturesResponse signaturesResponse) {
+            if (signaturesResponse == null || signaturesResponse.result() == null) {
+                System.err.println("Signatures response or result is null");
                 return false;
             }
 
-            SignatureResponseResult latestSignature = results.get(results.size() - 1);
-            TransactionResponse transaction = transactionClient.getSingleTransaction(latestSignature.signature());
+            int transactionCount = signaturesResponse.result().size();
+//            logger.info("Total signatures/transactions per wallet: " + transactionCount);
 
-            LocalDateTime transactionTime = LocalDateTime.ofEpochSecond(
-                    transaction.result().blockTime(), 0, ZoneOffset.UTC);
-            LocalDateTime currentTime = LocalDateTime.now(ZoneOffset.UTC);
-
-            return Duration.between(transactionTime, currentTime).toHours() <= 24;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
+            return transactionCount >= MIN_TRANSACTION_COUNT && transactionCount <= MAX_TRANSACTION_COUNT;
         }
-    }
+
+        private boolean isTransactionRecent(SignaturesResponse signaturesResponse) {
+            if (signaturesResponse == null || signaturesResponse.result() == null || signaturesResponse.result().isEmpty()) {
+                System.err.println("Signatures response or result is null/empty");
+                return false;
+            }
+
+            try {
+                List<SignatureResponseResult> results = signaturesResponse.result();
+                SignatureResponseResult latestSignature = results.get(results.size() - 1);
+
+                TransactionResponse transaction = transactionClient.getSingleTransaction(latestSignature.signature());
+                if (transaction == null || transaction.result() == null) {
+                    System.err.println("Transaction or block time is null for signature " + latestSignature.signature());
+                    return false;
+                }
+
+                LocalDateTime transactionTime = LocalDateTime.ofEpochSecond(
+                        transaction.result().blockTime(), 0, ZoneOffset.UTC);
+                LocalDateTime currentTime = LocalDateTime.now(ZoneOffset.UTC);
+
+                long hoursBetween = Duration.between(transactionTime, currentTime).toHours();
+                return hoursBetween <= MAX_TRANSACTION_AGE_HOURS;
+            } catch (IOException e) {
+                System.err.println("Error fetching transaction details: " + e.getMessage());
+                return false;
+            }
+        }
+
 
     public Map<String, Set<String>> getWalletsWithDefiUrl(
             Map<String, Set<String>> signaturesForWallets,

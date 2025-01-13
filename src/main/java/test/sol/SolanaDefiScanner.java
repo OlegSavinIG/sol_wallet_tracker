@@ -72,16 +72,31 @@ public class SolanaDefiScanner {
             Thread.sleep(700);
             NotActivatedWalletsQueue.addWallets(wallets);
 
+//            if (!confirmedWallets.get("Ray").isEmpty()) {
+//                String message = "Ray or Jup wallets found "
+//                        + confirmedWallets.get("Ray").size()
+//                        + " : \n" + String.join(" - \n", confirmedWallets.get("Ray"));
+//                TelegramInformationMessageHandler.sendToTelegram(message);
+//            }
             if (!confirmedWallets.get("Ray").isEmpty()) {
+                List<String> formattedWallets = confirmedWallets.get("Ray").stream()
+                        .map(wallet -> "https://gmgn.ai/sol/address/" + wallet)
+                        .toList();
+
                 String message = "Ray or Jup wallets found "
-                        + confirmedWallets.get("Ray").size()
-                        + " : - \n" + String.join(" - \n", confirmedWallets.get("Ray"));
+                        + formattedWallets.size()
+                        + " : \n" + String.join(" --- \n", formattedWallets);
                 TelegramInformationMessageHandler.sendToTelegram(message);
             }
+
             if (!confirmedWallets.get("Pump").isEmpty()) {
+                List<String> formattedWallets = confirmedWallets.get("Pump").stream()
+                        .map(wallet -> "https://gmgn.ai/sol/address/" + wallet)
+                        .toList();
+
                 String pumpMessage = "Pump wallets found "
                         + confirmedWallets.get("Pump").size()
-                        + " : - \n" + String.join(" - \n", confirmedWallets.get("Pump"));
+                        + " : \n" + String.join(" -- \n", formattedWallets);
                 TelegramInformationMessageHandler.sendToTelegram(pumpMessage);
             }
         } catch (IOException e) {

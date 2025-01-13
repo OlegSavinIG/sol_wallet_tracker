@@ -45,10 +45,8 @@ public class SignatureClient {
     }
 
     public Map<String, SignaturesResponse> getSignaturesForWallets(List<String> wallets) throws IOException {
-//        long startTime = System.nanoTime();
         Map<String, SignaturesResponse> result = new HashMap<>();
         int batchSize = 60;
-
         for (int i = 0; i < wallets.size(); i += batchSize) {
             List<String> batchWallets = wallets.subList(i, Math.min(i + batchSize, wallets.size()));
             Map<Integer, String> sortedWallets = IntStream.range(0, batchWallets.size())
@@ -56,7 +54,7 @@ public class SignatureClient {
                     .collect(Collectors.toMap(j -> j + 1, batchWallets::get));
 
             String batchRequest = requestBuilder.buildBatchRequestWithId(
-                    sortedWallets, "getSignaturesForAddress", 70);
+                    sortedWallets, "getSignaturesForAddress", 60);
 
             List<SignaturesResponse> signaturesResponses = requestSender.processRequestWithRetry(
                     batchRequest, RPC_URL, new TypeReference<List<SignaturesResponse>>() {
@@ -69,9 +67,6 @@ public class SignatureClient {
                 result.put(sortedWallets.get(response.id()), response);
             }
         }
-//        long endTime = System.nanoTime();
-//        System.out.println("getSignaturesForWallets working time - " + (endTime - startTime) / 1_000_000 + " ms");
-
         return result;
     }
 

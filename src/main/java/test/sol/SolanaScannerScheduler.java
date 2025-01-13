@@ -53,7 +53,7 @@ public class SolanaScannerScheduler {
         Runnable combinedTask = () -> {
             try {
                 accountCreationTask.run();
-                TimeUnit.SECONDS.sleep(35);
+                TimeUnit.SECONDS.sleep(25);
                 defiScannerTask.run();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

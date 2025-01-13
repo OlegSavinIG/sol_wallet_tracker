@@ -11,14 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class WalletsSubscriptionService {
     private static final Logger logger = LoggerFactory.getLogger(WalletsSubscriptionService.class);
-    private final WebSocket webSocket;
+    private WebSocket webSocket;
     private final Map<Integer, String> subscriptionMap = new ConcurrentHashMap<>();
-//    private final AtomicInteger walletId = new AtomicInteger(1);
-
-    public WalletsSubscriptionService(WebSocket webSocket) {
-        this.webSocket = webSocket;
-    }
-
+public void setWebSocket(WebSocket webSocket) {
+    this.webSocket = webSocket;
+}
+//    public WalletsSubscriptionService(WebSocket webSocket) {
+//        this.webSocket = webSocket;
+//    }
     public void subscribeToWallets(List<String> wallets) throws InterruptedException {
         if (!wallets.isEmpty()) {
             for (String wallet : wallets) {
@@ -34,6 +34,9 @@ public class WalletsSubscriptionService {
     }
 
     public void subscribeToWallet(String wallet) throws InterruptedException {
+        if (webSocket == null) {
+            throw new IllegalStateException("WebSocket is not initialized.");
+        }
         logger.info("Subscribe process activated with wallet {}", wallet);
         if (!SubscriptionWebSocketStorage.isContainsWallet(wallet)) {
             Thread.sleep(1000);
@@ -68,4 +71,5 @@ public class WalletsSubscriptionService {
     private String createAccountUnsubscriptionMessage(int subscriptionId) {
         return String.format("{\"jsonrpc\":\"2.0\",\"id\":%d,\"method\":\"accountUnsubscribe\",\"params\":[%d]}", subscriptionId, subscriptionId);
     }
+
 }
