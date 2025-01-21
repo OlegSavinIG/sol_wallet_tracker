@@ -11,12 +11,12 @@ import test.sol.redis.ValidatedWalletsRedis;
 import test.sol.service.accountinformation.AccountInformationService;
 import test.sol.service.accountinformation.AccountInformationServiceImpl;
 import test.sol.service.signature.SignatureService;
-import test.sol.service.signature.SignatureServiceImpl;
 import test.sol.service.signature.SignatureServiceImplWithSignaturesCash;
 import test.sol.service.transaction.TransactionService;
 import test.sol.service.transaction.TransactionServiceImpl;
 import test.sol.service.wallet.WalletService;
 import test.sol.utils.ClientFactory;
+import test.sol.utils.ConfigLoader;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,8 @@ public class SolanaNewWalletScanner {
     //    https://mainnet.helius-rpc.com/?api-key=d528e83e-fd04-44de-b13b-2a1839229b5b
 //    https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2
 //    private static final String RPC_URL = "https://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
-    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
+//    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
+    private static final String RPC_URL = ConfigLoader.getString("RPC_URL");
     private static final SignatureClient signatureClient = ClientFactory.createSignatureClient(RPC_URL);
     private static final TransactionClient transactionClient = ClientFactory.createTransactionClient(RPC_URL);
     private static final SignatureService signatureServiceWithCash = new SignatureServiceImplWithSignaturesCash();
@@ -56,7 +57,6 @@ public class SolanaNewWalletScanner {
             logger.info("Validated wallets {}", validatedWallets.size());
             ValidatedWalletsRedis.saveValidatedWalletsWithTTL(validatedWallets);
 
-//            validatedWallets.forEach(System.out::println);
             long endTime = System.nanoTime();
             System.out.println("SolanaNewWalletScanner working time " + (endTime - startTime) / 1_000_000 + " ms");
         } catch (Exception e) {

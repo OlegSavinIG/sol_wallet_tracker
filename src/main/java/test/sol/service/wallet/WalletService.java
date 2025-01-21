@@ -9,6 +9,7 @@ import test.sol.pojo.signature.SignaturesResponse;
 import test.sol.pojo.transaction.TransactionResponse;
 import test.sol.redis.SignatureRedis;
 import test.sol.utils.ClientFactory;
+import test.sol.utils.ConfigLoader;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -25,12 +26,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class WalletService {
-    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
+    private static final String RPC_URL = ConfigLoader.getString("RPC_URL");
+//    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
     private final TransactionClient transactionClient = ClientFactory.createTransactionClient(RPC_URL);
     private final SignatureClient signatureClient = ClientFactory.createSignatureClient(RPC_URL);
-    private static final int MIN_TRANSACTION_COUNT = 2;
-    private static final int MAX_TRANSACTION_COUNT = 55;
-    private static final int MAX_TRANSACTION_AGE_HOURS = 24;
+//    private static final int MIN_TRANSACTION_COUNT = 2;
+//    private static final int MAX_TRANSACTION_COUNT = 55;
+//    private static final int MAX_TRANSACTION_AGE_HOURS = 24;
+    private static final int MIN_TRANSACTION_COUNT = ConfigLoader.getInt("WALLETSERVICE_MIN_TRANSACTION_COUNT");
+    private static final int MAX_TRANSACTION_COUNT = ConfigLoader.getInt("WALLETSERVICE_MAX_TRANSACTION_COUNT");
+    private static final int MAX_TRANSACTION_AGE_HOURS = ConfigLoader.getInt("WALLETSERVICE_MAX_TRANSACTION_AGE_HOURS");
     private final Logger logger = LoggerFactory.getLogger(WalletService.class);
 
     public List<String> validateWallets(List<String> wallets) throws IOException {
@@ -44,41 +49,6 @@ public class WalletService {
         return validatedWallets;
     }
 
-//    private List<String> validateBatch(List<String> wallets) throws IOException {
-//        Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
-//
-//        return signaturesForWallets.entrySet().stream()
-//                .filter(entry -> isTransactionsCountBelow80(entry.getValue()))
-//                .filter(entry -> isTransactionTimeBefore24Hours(entry.getValue()))
-//                .map(Map.Entry::getKey)
-//                .collect(Collectors.toList());
-//    }
-//
-//    private boolean isTransactionsCountBelow80(SignaturesResponse signaturesResponse) {
-//        int transactionCount = signaturesResponse.result().size();
-//        return transactionCount > 1 && transactionCount < 55;
-//    }
-//
-//    private boolean isTransactionTimeBefore24Hours(SignaturesResponse signaturesResponse) {
-//        try {
-//            List<SignatureResponseResult> results = signaturesResponse.result();
-//            if (results.isEmpty()) {
-//                return false;
-//            }
-//
-//            SignatureResponseResult latestSignature = results.get(results.size() - 1);
-//            TransactionResponse transaction = transactionClient.getSingleTransaction(latestSignature.signature());
-//
-//            LocalDateTime transactionTime = LocalDateTime.ofEpochSecond(
-//                    transaction.result().blockTime(), 0, ZoneOffset.UTC);
-//            LocalDateTime currentTime = LocalDateTime.now(ZoneOffset.UTC);
-//
-//            return Duration.between(transactionTime, currentTime).toHours() <= 24;
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return false;
-//        }
-//    }
 
         public List<String> validateBatch(List<String> wallets) throws IOException {
             Map<String, SignaturesResponse> signaturesForWallets = signatureClient.getSignaturesForWallets(wallets);
@@ -104,7 +74,7 @@ public class WalletService {
 
         private boolean isTransactionCountValid(SignaturesResponse signaturesResponse) {
             if (signaturesResponse == null || signaturesResponse.result() == null) {
-                System.err.println("Signatures response or result is null");
+                logger.error("Signatures response or result is null");
                 return false;
             }
 
@@ -116,7 +86,7 @@ public class WalletService {
 
         private boolean isTransactionRecent(SignaturesResponse signaturesResponse) {
             if (signaturesResponse == null || signaturesResponse.result() == null || signaturesResponse.result().isEmpty()) {
-                System.err.println("Signatures response or result is null/empty");
+                logger.error("Signatures response or result is null/empty");
                 return false;
             }
 
@@ -126,7 +96,7 @@ public class WalletService {
 
                 TransactionResponse transaction = transactionClient.getSingleTransaction(latestSignature.signature());
                 if (transaction == null || transaction.result() == null) {
-                    System.err.println("Transaction or block time is null for signature " + latestSignature.signature());
+                    logger.error("Transaction or block time is null for signature " + latestSignature.signature());
                     return false;
                 }
 
@@ -137,7 +107,7 @@ public class WalletService {
                 long hoursBetween = Duration.between(transactionTime, currentTime).toHours();
                 return hoursBetween <= MAX_TRANSACTION_AGE_HOURS;
             } catch (IOException e) {
-                System.err.println("Error fetching transaction details: " + e.getMessage());
+                logger.error("Error fetching transaction details: " + e.getMessage());
                 return false;
             }
         }
@@ -165,6 +135,10 @@ public class WalletService {
             boolean isConfirmed = false;
             for (TransactionResponse transaction : transactions) {
                 String logMessages = transaction.result().meta().logMessages().toString();
+                if (logMessages.contains("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")){
+                    logger.info("Break couse meta token URL, wallet {}", entry.getKey());
+                    break;
+                }
                 if (logMessages.contains("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P")) {
                     pumpWallets.add(entry.getKey());
                     isConfirmed = true;

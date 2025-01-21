@@ -3,6 +3,7 @@ package test.sol.service.accountinformation;
 import test.sol.client.account.AccountClient;
 import test.sol.pojo.accountinformation.AccountInformationResponse;
 import test.sol.pojo.accountinformation.AccountInformationValue;
+import test.sol.utils.ConfigLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,7 +12,8 @@ import java.util.Set;
 
 public class AccountInformationServiceImpl implements AccountInformationService {
     private final AccountClient accountClient = new AccountClient();
-    private static final Integer MIN_LAMPORTS = 500000000;
+    private static final Integer MIN_LAMPORTS = ConfigLoader.getInt("ACCOUNT_INFORMATION_MIN_LAMPORTS");
+//    private static final Integer MIN_LAMPORTS = 500000000;
 
     @Override
     public List<String> isPositiveBalance(Set<String> wallets) throws IOException {

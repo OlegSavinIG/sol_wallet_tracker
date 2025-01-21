@@ -21,7 +21,7 @@ public class SubscriptionWebSocketStorage {
     }
 
     public static void addWalletWithId(int id, String wallet) {
-        logger.info("wallet added {}", wallet);
+        logger.info("Wallet added {}", wallet);
         idWalletMap.put(id, wallet);
     }
 
@@ -50,7 +50,6 @@ public class SubscriptionWebSocketStorage {
     }
 
     public static void addSubscriptionWithId(int subscription, int id) {
-        logger.info("Added subs ID to map {} with ID {}", subscription, id);
         subscriptionIdMap.put(subscription, id);
         walletSubscriptionMap.put(idWalletMap.get(id), subscription);
     }

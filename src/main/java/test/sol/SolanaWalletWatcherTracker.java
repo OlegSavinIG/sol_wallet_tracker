@@ -7,6 +7,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import test.sol.redis.TrackWalletsRedis;
 import test.sol.telegram.WalletWatcherTrackerBot;
+import test.sol.utils.ConfigLoader;
 import test.sol.wallettracker.AccountSubscriptionService;
 import test.sol.wallettracker.SubscriptionWalletStorage;
 import test.sol.wallettracker.queuelistener.RemoveWalletProcessor;
@@ -21,7 +22,8 @@ import java.util.Set;
 public class SolanaWalletWatcherTracker {
 
     private static final Logger logger = LoggerFactory.getLogger(SolanaWalletWatcherTracker.class);
-    public static final String WSS_PROVIDER_URL = "wss://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
+    public static final String WSS_PROVIDER_URL = ConfigLoader.getString("WSS_PROVIDER_URL");
+//    public static final String WSS_PROVIDER_URL = "wss://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
 
     public static void main(String[] args) throws TelegramApiException {
         logger.info("🔔 Starting Solana Account Notifier...");

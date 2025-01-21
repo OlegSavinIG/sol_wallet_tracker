@@ -17,9 +17,7 @@ public class SolanaScannerScheduler {
 
         Runnable initializeWebSocketValidator = () -> {
             try {
-                System.out.println("\uD83D\uDD27 Initializing SolanaDefiWebSocketValidator at: " + LocalTime.now().format(TIME_FORMATTER));
                 SolanaDefiWebSocketValidator.main(args);
-                System.out.println("\u2705 SolanaDefiWebSocketValidator initialized successfully.");
             } catch (Exception e) {
                 System.err.println("Error while initializing SolanaDefiWebSocketValidator: " + e.getMessage());
                 e.printStackTrace();
@@ -30,9 +28,7 @@ public class SolanaScannerScheduler {
 
         Runnable accountCreationTask = () -> {
             try {
-                System.out.println("Starting accountCreationTask at: " + LocalTime.now().format(TIME_FORMATTER));
                 SolanaNewWalletScanner.main(null);
-                System.out.println("Finished accountCreationTask at: " + LocalTime.now().format(TIME_FORMATTER));
             } catch (Exception e) {
                 System.err.println("Error while executing SolanaNewWalletScanner: " + e.getMessage());
                 e.printStackTrace();
@@ -41,9 +37,7 @@ public class SolanaScannerScheduler {
 
         Runnable defiScannerTask = () -> {
             try {
-                System.out.println("Starting defiScannerTask at: " + LocalTime.now().format(TIME_FORMATTER));
                 SolanaDefiScanner.main(null);
-                System.out.println("Finished defiScannerTask at: " + LocalTime.now().format(TIME_FORMATTER));
             } catch (Exception e) {
                 System.err.println("Error while executing SolanaDefiScanner: " + e.getMessage());
                 e.printStackTrace();

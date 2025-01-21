@@ -30,29 +30,6 @@ public class TransactionServiceImpl implements TransactionService {
                 )
                 .collect(Collectors.toList());
     }
-//    @Override
-//    public List<TransactionResult> getTransactionsWithTransfer(List<TransactionResponse> transactions) {
-//        List<TransactionResult> transactionsWithTransfer = transactions.stream()
-//                .map(TransactionResponse::result)
-//                .filter(Objects::nonNull)
-//                .filter(transactionResult -> transactionResult.meta().err() == null)
-//                .filter(result -> result.transaction() != null)
-//                .filter(result -> result.transaction()
-//                        .message()
-//                        .instructions().stream()
-//                        .filter(instruction -> instruction.parsed() != null)
-//                        .anyMatch(instruction -> "transfer".equals(instruction.parsed().type()))
-//                )
-//                .collect(Collectors.toList());
-//
-//        List<TransactionResult> transactionsWithDefi = defiUrlChecker(transactionsWithTransfer);
-//        if (!transactionsWithDefi.isEmpty()) {
-//            logger.info("Early wallets detected {}", transactionsWithDefi.size());
-//            transactionsWithTransfer.removeAll(transactionsWithDefi);
-//        }
-//
-//        return transactionsWithTransfer;
-//    }
 
     @Override
     public Set<String> extractWalletsFromTransactions(List<TransactionResult> transactions) {

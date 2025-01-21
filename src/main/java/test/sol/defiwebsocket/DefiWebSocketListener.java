@@ -93,61 +93,12 @@ public class DefiWebSocketListener implements WebSocket.Listener {
             logger.info("✅ WebSocket closed gracefully.");
             webSocketManager.scheduleReconnect(); // Переподключаемся
         });
-//
-//        reconnect();
     }
 
     @Override
     public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-        logger.info("❎ WebSocket closed. Status: {}, Reason: {}", statusCode, reason);
-//        reconnect();
+        logger.error("❎ WebSocket closed. Status: {}, Reason: {}", statusCode, reason);
         webSocketManager.scheduleReconnect();
         return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
     }
-
-//    private void reconnect() {
-//        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-//            logger.error("❌ Maximum reconnect attempts reached. Giving up.");
-//            return;
-//        }
-//        reconnectAttempts++;
-//        long delay = Math.min((long) Math.pow(2, reconnectAttempts) * RECONNECT_DELAY_MS, MAX_RECONNECT_DELAY_MS);
-//
-//        logger.info("🔄 Reconnecting in {} ms (attempt {}/{})", delay, reconnectAttempts, MAX_RECONNECT_ATTEMPTS);
-//
-//        CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS)
-//                .execute(this::connect);
-//    }
-//
-//    public void connect() {
-//        logger.info("🔄 Connecting to WebSocket...");
-//        try {
-//            HttpClient httpClient = HttpClient.newHttpClient();
-//            WebSocket webSocket = httpClient.newWebSocketBuilder()
-//                    .buildAsync(URI.create(SolanaDefiWebSocketValidator.WSS_PROVIDER_URL), this)
-//                    .join();// Подключение WebSocket
-//            reconnectAttempts = 0; // Сброс счетчика попыток
-////            WalletsSubscriptionService subscriptionService = new WalletsSubscriptionService(webSocket);
-////            restoreSubscriptions(subscriptionService); // Восстанавливаем подписки
-//            logger.info("✅ Connected to WebSocket.");
-//        } catch (Exception e) {
-//            logger.error("❌ Error connecting to WebSocket: {}", e.getMessage(), e);
-//            reconnect();
-//        }
-//    }
-
-//    private void restoreSubscriptions(WalletsSubscriptionService subscriptionService) {
-//        logger.info("🔄 Restoring subscriptions from Redis...");
-//        List<String> wallets = NotActivatedWalletsRedis.load();
-//
-//        for (String wallet : wallets) {
-//            try {
-//                subscriptionService.subscribeToWallet(wallet);
-//            } catch (Exception e) {
-//                logger.error("❌ Failed to resubscribe wallet {}: {}", wallet, e.getMessage(), e);
-//            }
-//        }
-//
-//        logger.info("✅ Subscriptions restored. Total wallets: {}", wallets.size());
-//    }
 }

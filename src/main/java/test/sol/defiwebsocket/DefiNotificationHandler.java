@@ -13,6 +13,7 @@ import test.sol.service.signature.SignatureService;
 import test.sol.service.signature.SignatureServiceImpl;
 import test.sol.telegram.TelegramInformationMessageHandler;
 import test.sol.utils.ClientFactory;
+import test.sol.utils.ConfigLoader;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,7 +21,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DefiNotificationHandler {
-    public static final String WSS_PROVIDER_URL = "wss://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
+    public static final String WSS_PROVIDER_URL = ConfigLoader.getString("SECOND_WSS_PROVIDER_URL");
+//    public static final String WSS_PROVIDER_URL = "wss://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
     private final SignatureClient signatureClient = ClientFactory.createSignatureClient(WSS_PROVIDER_URL);
     private final TransactionClient transactionClient = ClientFactory.createTransactionClient(WSS_PROVIDER_URL);
     private final SignatureService signatureService = new SignatureServiceImpl();
@@ -34,7 +36,8 @@ public class DefiNotificationHandler {
     );
     private static final List<String> UNSUB_URLS = List.of(
             "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
+            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+            "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 //            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
     );
     private static final Logger logger = LoggerFactory.getLogger(DefiNotificationHandler.class);
@@ -73,14 +76,14 @@ public class DefiNotificationHandler {
             TransactionResponse transaction = transactionClient.getSingleTransaction(signature);
             String logMessage = transaction.result().meta().logMessages().toString();
             logger.info("Validation finished");
-            if (containsDefiUrl(logMessage)) {
-                TelegramInformationMessageHandler.sendToTelegram("Wallet activated: https://gmgn.ai/sol/address/" + wallet);
+            if (containsUnsubUrl(logMessage)) {
+                logger.warn("Wallet log contains unsub url {}", wallet);
                 UnsubscribeWalletsQueue.addWallet(wallet);
                 NotActivatedWalletsRedis.remove(List.of(wallet));
                 break;
             }
-            if (containsUnsubUrl(logMessage)) {
-                logger.warn("Wallet log contains unsub url {}", wallet);
+            if (containsDefiUrl(logMessage)) {
+                TelegramInformationMessageHandler.sendToTelegram("Wallet activated: https://gmgn.ai/sol/address/" + wallet);
                 UnsubscribeWalletsQueue.addWallet(wallet);
                 NotActivatedWalletsRedis.remove(List.of(wallet));
                 break;

@@ -21,7 +21,6 @@ public class RequestSender {
     private static final int READ_TIMEOUT_SECONDS = 60;
     private static final int WRITE_TIMEOUT_SECONDS = 60;
     private static final int MAX_RETRIES = 3;
-
     private final OkHttpClient client;
     private final ObjectMapper objectMapper;
     private final Logger logger;
