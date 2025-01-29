@@ -23,8 +23,6 @@ public class SolanaWalletWatcherTracker {
 
     private static final Logger logger = LoggerFactory.getLogger(SolanaWalletWatcherTracker.class);
     public static final String WSS_PROVIDER_URL = ConfigLoader.getString("WSS_PROVIDER_URL");
-//    public static final String WSS_PROVIDER_URL = "wss://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
-
     public static void main(String[] args) throws TelegramApiException {
         logger.info("🔔 Starting Solana Account Notifier...");
 

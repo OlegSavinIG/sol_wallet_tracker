@@ -23,16 +23,10 @@ import java.util.stream.Collectors;
 
 public class SolanaDefiScanner {
     private static final String RPC_URL = ConfigLoader.getString("RPC_URL");
-//    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
     private static final SignatureClient signatureClient = ClientFactory.createSignatureClient(RPC_URL);
     private static final SignatureService signatureService = new SignatureServiceImpl();
     private static final WalletService walletService = new WalletService();
     private static final Logger logger = LoggerFactory.getLogger(SolanaDefiScanner.class);
-//    private static final List<String> DEFI_URLS = List.of(
-//            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-//            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
-////            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
-//    );
     private static final List<String> DEFI_URLS = ConfigLoader.getList("DEFI_URLS");
 
     public static void main(String[] args) throws IOException, InterruptedException {

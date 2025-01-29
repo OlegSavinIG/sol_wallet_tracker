@@ -10,7 +10,7 @@ import java.io.IOException;
 public class TelegramInformationMessageHandler {
     public static void sendToTelegram(String message) {
         String botToken = ConfigLoader.getString("INFORMATION_BOT_TOKEN");
-        String chatId = ConfigLoader.getString("INFORMATION_BOT_ID"); // Укажите ID вашего чата (можно получить с помощью метода /getUpdates)
+        String chatId = ConfigLoader.getString("INFORMATION_BOT_ID");
 
         String url = String.format(
                 "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s",

@@ -16,9 +16,6 @@ public class WalletsSubscriptionService {
 public void setWebSocket(WebSocket webSocket) {
     this.webSocket = webSocket;
 }
-//    public WalletsSubscriptionService(WebSocket webSocket) {
-//        this.webSocket = webSocket;
-//    }
     public void subscribeToWallets(List<String> wallets) throws InterruptedException {
         if (!wallets.isEmpty()) {
             for (String wallet : wallets) {

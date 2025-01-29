@@ -18,9 +18,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WalletWatcherTrackerBot extends TelegramLongPollingBot {
-
-    //    private static final String BOT_USERNAME = "Sol_Wallet_WatcherBot";
-//    private static final String BOT_TOKEN = "8144297666:AAHHYXwjQJ2Cu65Nnyb25OTFfIWly10F6gU";
     private static final String BOT_USERNAME = ConfigLoader.getString("WALLETWATCHER_BOT_USERNAME");
     private static final String BOT_TOKEN = ConfigLoader.getString("WALLETWATCHER_BOT_TOKEN");
     private static final Set<String> walletAddresses = Collections.newSetFromMap(new ConcurrentHashMap<>());

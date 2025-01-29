@@ -13,8 +13,6 @@ import java.util.Set;
 public class AccountInformationServiceImpl implements AccountInformationService {
     private final AccountClient accountClient = new AccountClient();
     private static final Integer MIN_LAMPORTS = ConfigLoader.getInt("ACCOUNT_INFORMATION_MIN_LAMPORTS");
-//    private static final Integer MIN_LAMPORTS = 500000000;
-
     @Override
     public List<String> isPositiveBalance(Set<String> wallets) throws IOException {
         List<String> positiveBalance = new ArrayList<>();

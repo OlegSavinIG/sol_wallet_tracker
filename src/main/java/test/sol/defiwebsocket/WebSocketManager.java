@@ -2,6 +2,7 @@ package test.sol.defiwebsocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import test.sol.utils.ConfigLoader;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -13,7 +14,8 @@ import java.util.concurrent.TimeUnit;
 public class WebSocketManager {
     private static final Logger logger = LoggerFactory.getLogger(WebSocketManager.class);
 
-    private static final String WSS_PROVIDER_URL = "wss://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
+    private static final String WSS_PROVIDER_URL = ConfigLoader.getString("SECOND_WSS_PROVIDER_URL");
+//    private static final String WSS_PROVIDER_URL = "wss://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
     private static final int RECONNECT_DELAY_SECONDS = 5;
 
     private WebSocket webSocket;

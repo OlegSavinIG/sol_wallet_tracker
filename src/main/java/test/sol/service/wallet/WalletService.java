@@ -27,12 +27,8 @@ import java.util.stream.Collectors;
 
 public class WalletService {
     private static final String RPC_URL = ConfigLoader.getString("RPC_URL");
-//    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
     private final TransactionClient transactionClient = ClientFactory.createTransactionClient(RPC_URL);
     private final SignatureClient signatureClient = ClientFactory.createSignatureClient(RPC_URL);
-//    private static final int MIN_TRANSACTION_COUNT = 2;
-//    private static final int MAX_TRANSACTION_COUNT = 55;
-//    private static final int MAX_TRANSACTION_AGE_HOURS = 24;
     private static final int MIN_TRANSACTION_COUNT = ConfigLoader.getInt("WALLETSERVICE_MIN_TRANSACTION_COUNT");
     private static final int MAX_TRANSACTION_COUNT = ConfigLoader.getInt("WALLETSERVICE_MAX_TRANSACTION_COUNT");
     private static final int MAX_TRANSACTION_AGE_HOURS = ConfigLoader.getInt("WALLETSERVICE_MAX_TRANSACTION_AGE_HOURS");
@@ -79,8 +75,6 @@ public class WalletService {
             }
 
             int transactionCount = signaturesResponse.result().size();
-//            logger.info("Total signatures/transactions per wallet: " + transactionCount);
-
             return transactionCount >= MIN_TRANSACTION_COUNT && transactionCount <= MAX_TRANSACTION_COUNT;
         }
 

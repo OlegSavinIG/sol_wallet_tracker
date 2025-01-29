@@ -22,24 +22,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DefiNotificationHandler {
     public static final String WSS_PROVIDER_URL = ConfigLoader.getString("SECOND_WSS_PROVIDER_URL");
-//    public static final String WSS_PROVIDER_URL = "wss://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
     private final SignatureClient signatureClient = ClientFactory.createSignatureClient(WSS_PROVIDER_URL);
     private final TransactionClient transactionClient = ClientFactory.createTransactionClient(WSS_PROVIDER_URL);
     private final SignatureService signatureService = new SignatureServiceImpl();
     private final ConcurrentHashMap<String, Long> lastProcessedTime = new ConcurrentHashMap<>();
-    private static final long MIN_PROCESS_INTERVAL_MS = 3500; // Минимальный интервал обработки (5 секунд)
-
-    private static final List<String> DEFI_URLS = List.of(
-//            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-//            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
-    );
-    private static final List<String> UNSUB_URLS = List.of(
-            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-            "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-//            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
-    );
+    private static final long MIN_PROCESS_INTERVAL_MS = 3500;
+    private static final List<String> DEFI_URLS = ConfigLoader.getList("DEFI_URLS_FOR_SUBSCRIPTION");
+    private static final List<String> UNSUB_URLS = ConfigLoader.getList("UNSUB_URLS_FOR_SUBSCRIPTION");
     private static final Logger logger = LoggerFactory.getLogger(DefiNotificationHandler.class);
 
     public void handleNotification(Integer subscription) {
