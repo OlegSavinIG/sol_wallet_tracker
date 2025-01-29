@@ -13,6 +13,7 @@ import test.sol.service.signature.SignatureServiceImpl;
 import test.sol.service.wallet.WalletService;
 import test.sol.telegram.TelegramInformationMessageHandler;
 import test.sol.utils.ClientFactory;
+import test.sol.utils.ConfigLoader;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,21 +22,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SolanaDefiScanner {
-    private static final String RPC_URL = "https://cool-long-sky.solana-mainnet.quiknode.pro/11f11504b987da4fa32dbb3ab4c8bfe913db4ee2";
+    private static final String RPC_URL = ConfigLoader.getString("RPC_URL");
     private static final SignatureClient signatureClient = ClientFactory.createSignatureClient(RPC_URL);
     private static final SignatureService signatureService = new SignatureServiceImpl();
     private static final WalletService walletService = new WalletService();
     private static final Logger logger = LoggerFactory.getLogger(SolanaDefiScanner.class);
-    private static final List<String> DEFI_URLS = List.of(
-            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-            "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"
-//            "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
-    );
+    private static final List<String> DEFI_URLS = ConfigLoader.getList("DEFI_URLS");
 
     public static void main(String[] args) throws IOException, InterruptedException {
         long startTime = System.nanoTime();
         logger.info("SolanaDefiScanner работает");
-
         try {
             List<String> wallets = ValidatedWalletsRedis.loadValidatedAccounts();
             if (wallets.isEmpty()) {
@@ -72,18 +68,27 @@ public class SolanaDefiScanner {
             Thread.sleep(700);
             NotActivatedWalletsQueue.addWallets(wallets);
 
-            if (!confirmedWallets.get("Ray").isEmpty()) {
-                String message = "Ray or Jup wallets found "
-                        + confirmedWallets.get("Ray").size()
-                        + " : - \n" + String.join(" - \n", confirmedWallets.get("Ray"));
-                TelegramInformationMessageHandler.sendToTelegram(message);
-            }
             if (!confirmedWallets.get("Pump").isEmpty()) {
+                List<String> formattedWallets = confirmedWallets.get("Pump").stream()
+                        .map(wallet -> "https://gmgn.ai/sol/address/" + wallet)
+                        .toList();
+
                 String pumpMessage = "Pump wallets found "
                         + confirmedWallets.get("Pump").size()
-                        + " : - \n" + String.join(" - \n", confirmedWallets.get("Pump"));
+                        + " : \n" + String.join(" -- \n", formattedWallets);
                 TelegramInformationMessageHandler.sendToTelegram(pumpMessage);
             }
+            if (!confirmedWallets.get("Ray").isEmpty()) {
+                List<String> formattedWallets = confirmedWallets.get("Ray").stream()
+                        .map(wallet -> "https://gmgn.ai/sol/address/" + wallet)
+                        .toList();
+
+                String message = "Ray or Jup wallets found "
+                        + formattedWallets.size()
+                        + " : \n" + String.join(" --- \n", formattedWallets);
+                TelegramInformationMessageHandler.sendToTelegram(message);
+            }
+
         } catch (IOException e) {
             logger.error("IOException occurred in SolanaDefiScanner: {}", e.getMessage(), e);
         } catch (InterruptedException e) {

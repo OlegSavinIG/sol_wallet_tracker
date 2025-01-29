@@ -10,6 +10,7 @@ import test.sol.redis.TrackWalletsRedis;
 import test.sol.telegram.keyboard.InlineKeyboard;
 import test.sol.telegram.service.UserStateHandler;
 import test.sol.telegram.service.WalletHandlerService;
+import test.sol.utils.ConfigLoader;
 
 import java.util.Collections;
 import java.util.Map;
@@ -17,9 +18,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WalletWatcherTrackerBot extends TelegramLongPollingBot {
-
-    private static final String BOT_USERNAME = "Sol_Wallet_WatcherBot";
-    private static final String BOT_TOKEN = "8144297666:AAHHYXwjQJ2Cu65Nnyb25OTFfIWly10F6gU";
+    private static final String BOT_USERNAME = ConfigLoader.getString("WALLETWATCHER_BOT_USERNAME");
+    private static final String BOT_TOKEN = ConfigLoader.getString("WALLETWATCHER_BOT_TOKEN");
     private static final Set<String> walletAddresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private static final Map<String, String> userWalletMapping = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(WalletWatcherTrackerBot.class);
@@ -143,11 +143,11 @@ public class WalletWatcherTrackerBot extends TelegramLongPollingBot {
 
     public void notifyUserAboutEvent(String walletAddress, String eventDetails) {
         Set<String> walletChatIDs = TrackWalletsRedis.getWalletChatIDs(walletAddress);
-//        String chatId = userWalletMapping.get(walletAddress);
         logger.info("Sending response for chatIds {}", walletChatIDs);
         if (walletChatIDs != null) {
-            walletChatIDs.forEach(chatId -> sendMessage(chatId, "🔔 Event detected for wallet " + walletAddress + ":\n" + eventDetails));
-//            sendMessage(chatId, "🔔 Event detected for wallet " + walletAddress + ":\n" + eventDetails);
+            walletChatIDs.forEach(chatId -> sendMessage(
+                    chatId, "🔔 Event detected for wallet https://gmgn.ai/sol/address/"
+                    + walletAddress + ":\n" + eventDetails));
         }
     }
 }

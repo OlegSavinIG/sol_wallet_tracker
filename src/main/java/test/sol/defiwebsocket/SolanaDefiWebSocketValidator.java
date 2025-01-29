@@ -6,27 +6,18 @@ import test.sol.defiwebsocket.queueprocessor.NotActivatedWalletsProcessor;
 import test.sol.defiwebsocket.queueprocessor.UnsubscribeWalletProcessor;
 import test.sol.redis.NotActivatedWalletsRedis;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.WebSocket;
 import java.util.List;
 
 public class SolanaDefiWebSocketValidator {
     private static final Logger logger = LoggerFactory.getLogger(SolanaDefiWebSocketValidator.class);
-    public static final String WSS_PROVIDER_URL = "wss://attentive-dimensional-needle.solana-mainnet.quiknode.pro/dc0abb602a7a6e28b6c7e69eb336b565e8709d2a";
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         logger.info("🔔 Starting SolanaDefiWebSocketValidator...");
 
         List<String> wallets = NotActivatedWalletsRedis.load();
+        WalletsSubscriptionService subscriptionService = new WalletsSubscriptionService();
+        WebSocketManager webSocketManager = new WebSocketManager(wallets, subscriptionService);
 
-        HttpClient client = HttpClient.newHttpClient();
-        WebSocket webSocket = client.newWebSocketBuilder()
-                .buildAsync(URI.create(WSS_PROVIDER_URL), new DefiSolanaWebSocketListener())
-                .join();
-
-        WalletsSubscriptionService subscriptionService = new WalletsSubscriptionService(webSocket);
-        subscriptionService.subscribeToWallets(wallets);
 
         NotActivatedWalletsProcessor walletsProcessor = new NotActivatedWalletsProcessor(subscriptionService);
         UnsubscribeWalletProcessor unsubscribeWalletProcessor = new UnsubscribeWalletProcessor(subscriptionService);
@@ -36,7 +27,9 @@ public class SolanaDefiWebSocketValidator {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             walletsProcessor.stopProcessing();
             unsubscribeWalletProcessor.stopProcessing();
+            webSocketManager.close();
             logger.info("✅ Application stopped.");
         }));
+        webSocketManager.connect();
     }
 }

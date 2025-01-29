@@ -15,7 +15,6 @@ public class WalletHandlerService {
     private final Set<String> walletAddresses;
     private final Map<String, String> userWalletMapping;
     private final WalletWatcherTrackerBot bot;
-
     private static final Logger logger = LoggerFactory.getLogger(WalletHandlerService.class);
 
     public WalletHandlerService(Set<String> walletAddresses, Map<String, String> userWalletMapping, WalletWatcherTrackerBot bot) {
@@ -66,14 +65,14 @@ public class WalletHandlerService {
         }
         String walletAddress = parts[1];
         if (isValidWalletAddress(walletAddress)) {
-            if (walletAddresses.remove(walletAddress)) {
+//            if (walletAddresses.remove(walletAddress)) {
                 userWalletMapping.remove(walletAddress);
                 TrackWalletsRedis.deleteWalletChatIDs(walletAddress);
                 RemoveWalletQueue.addWallet(walletAddress);
                 bot.sendMessage(chatId, "✅ Wallet removed successfully: " + walletAddress);
-            } else {
-                bot.sendMessage(chatId, "⚠️ Wallet not found: " + walletAddress);
-            }
+//            } else {
+//                bot.sendMessage(chatId, "⚠️ Wallet not found: " + walletAddress);
+//            }
         } else {
             logger.error("Invalid wallet address: {}", walletAddress);
             bot.sendMessage(chatId, "❌ Invalid wallet address.");

@@ -11,7 +11,7 @@ public class NotificationHandler {
     public void handleNotification(Integer subscription) {
         String wallet = SubscriptionWalletStorage.getWalletBySubscription(subscription);
         logger.info("\uD83D\uDCB3 Wallet: {}", wallet);
-        bot.notifyUserAboutEvent(wallet , "New event");
+        bot.notifyUserAboutEvent(wallet , "New event, wallet -> " + wallet);
     }
 
     private void processValue(String address, Value value) {
